@@ -1,0 +1,6 @@
+%{"cowboy": {:hex, :cowboy, "1.0.4"},
+  "cowlib": {:hex, :cowlib, "1.0.2"},
+  "ecc": {:hex, :ecc, "0.1.3"},
+  "json": {:git, "git://github.com/cblage/elixir-json.git", "0b2839d6300b3a872f2aa3c1062fb5f3322fddbf", []},
+  "poison": {:hex, :poison, "1.5.2"},
+  "ranch": {:hex, :ranch, "1.2.1"}}
