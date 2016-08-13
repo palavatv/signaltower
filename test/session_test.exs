@@ -89,7 +89,7 @@ defmodule SessionTest do
       }, room
     end
 
-    _client2 = create_client "s-room6", fn room ->
+    _client2 = create_client "s-room6", fn _ ->
       assert_receive {:to_user, %{
         event: "peer_updated_status",
         sender_id: "0",
@@ -108,7 +108,7 @@ defmodule SessionTest do
       assert_receive {:to_user, m = %{event: "error"}}
       assert m[:description] == "Action only possible when in a room"
 
-      room = Session.handle_message %{
+      Session.handle_message %{
         event: "send_to_peer",
         peer_id: "some_peer",
         data: %{some: "data"}
@@ -126,23 +126,28 @@ defmodule SessionTest do
   defp create_client room_id \\ nil, leave_after_finish \\ false, fun do
     host = self()
 
-    spawn_link fn ->
+    pid = spawn_link fn ->
       room = case room_id do
-        nil -> nil
-        room_id -> join_room(room_id)
+        nil ->
+          send host, :start
+          nil
+        room_id -> join_room(room_id, host)
       end
       fun.(room)
       send host, :break
       unless leave_after_finish, do: :timer.sleep(:infinity)
     end
+    assert_receive :start
+    pid
   end
 
-  defp join_room(room_id) do
+  defp join_room(room_id, host) do
     room = Session.handle_message %{
       event: "join_room",
       room_id: room_id,
       status: %{local: "status"},
     }, nil
+    if host, do: send host, :start
     assert_receive {:to_user, m}, 1000 # joined_room
     if length(m[:peers]) == 0, do: assert_receive({:to_user, %{event: "new_peer"}}, 1000) # wait for second peer
     room
