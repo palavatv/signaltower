@@ -16,7 +16,7 @@ defmodule SignalTower do
     {port, _} = Integer.parse(System.get_env("PALAVA_RTC_ADDRESS") || "4233")
 
     dispatch = :cowboy_router.compile([
-      {:_, [{"/", SignalTower.WebsocketHandler, []}]} # TODO check [] if removable
+      {:_, [{"/[...]", SignalTower.WebsocketHandler, []}]} # TODO check [] if removable
     ])
 
     {:ok, _} = :cowboy.start_http(:http, 100, [{:port, port}], [{:env, [{:dispatch, dispatch}]}])
