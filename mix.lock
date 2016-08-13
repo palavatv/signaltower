@@ -1,6 +1,13 @@
-%{"cowboy": {:hex, :cowboy, "1.0.4"},
+%{"bbmustache": {:hex, :bbmustache, "1.0.4"},
+  "cf": {:hex, :cf, "0.2.1"},
+  "cowboy": {:hex, :cowboy, "1.0.4"},
   "cowlib": {:hex, :cowlib, "1.0.2"},
   "ecc": {:hex, :ecc, "0.1.3"},
+  "erlware_commons": {:hex, :erlware_commons, "0.21.0"},
+  "exrm": {:hex, :exrm, "1.0.8"},
+  "getopt": {:hex, :getopt, "0.8.2"},
   "json": {:git, "git://github.com/cblage/elixir-json.git", "0b2839d6300b3a872f2aa3c1062fb5f3322fddbf", []},
   "poison": {:hex, :poison, "1.5.2"},
-  "ranch": {:hex, :ranch, "1.2.1"}}
+  "providers": {:hex, :providers, "1.6.0"},
+  "ranch": {:hex, :ranch, "1.2.1"},
+  "relx": {:hex, :relx, "3.20.0"}}
