@@ -1,3 +1,8 @@
+## 1.0.1
+
+Fix issue that distillery could not stop a running signal tower service.
+Introduces new root supervisor that includes supervision for Cowboy.
+
 ## 1.0.0
 
 Working state with full palava protocol support.
