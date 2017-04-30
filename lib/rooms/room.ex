@@ -58,7 +58,7 @@ defmodule SignalTower.Room do
 
   def handle_cast {:send_to_peer, peer_id, msg, sender_id}, state = {_,members} do
     if members[sender_id] && members[peer_id] do
-      send members[peer_id].pid, {:to_user, Dict.put(msg, :sender_id, sender_id)}
+      send members[peer_id].pid, {:to_user, Map.put(msg, :sender_id, sender_id)}
     end
     {:noreply, state}
   end

@@ -21,7 +21,7 @@ defmodule SignalTower.MsgIntegrity do
   defp fill_optional(msg) do
     msg = cond do
       msg["event"] == "join_room" && !msg["status"] ->
-        Dict.put msg, "status", %{}
+        Map.put msg, "status", %{}
       true -> msg
     end
     msg

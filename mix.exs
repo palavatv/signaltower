@@ -6,7 +6,7 @@ defmodule SignalTower.Mixfile do
       app: :signal_tower,
       version: "1.0.0",
       elixir: "~> 1.3",
-      deps: deps
+      deps: deps()
     ]
   end
 
