@@ -15,6 +15,7 @@ defmodule SignalTower.Room do
   alias SignalTower.RoomSupervisor
   alias SignalTower.RoomMember
   alias SignalTower.RoomMembership
+  alias SignalTower.Stats
   use GenServer
 
   ## API ##
@@ -34,10 +35,13 @@ defmodule SignalTower.Room do
   ## Callbacks ##
 
   def init(room_id) do
+    GenServer.cast Stats, :count_room
     {:ok, {room_id, %{}}}
   end
 
   def handle_call {:join, pid, status}, _, {room_id,members} do
+    GenServer.cast Stats, :count_user
+
     Process.monitor(pid)
     peer_id = get_next_id(members)
     send_joined_room(pid, peer_id, members)

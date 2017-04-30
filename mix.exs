@@ -16,7 +16,7 @@ defmodule SignalTower.Mixfile do
   def application do
     [
       mod: { SignalTower, [] },
-      applications: [:logger, :cowboy, :poison]
+      applications: [:logger, :cowboy, :poison, :collectd]
     ]
   end
 

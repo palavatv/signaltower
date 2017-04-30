@@ -9,6 +9,7 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   def websocket_init(_transport_name, req, _opts) do
+    Session.init()
     {:ok, req, nil}
   end
 
@@ -62,6 +63,7 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   def websocket_terminate(_reason, _req, _state) do
+    Session.destroy()
     :ok
   end
 end
