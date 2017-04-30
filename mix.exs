@@ -5,7 +5,7 @@ defmodule SignalTower.Mixfile do
     [
       app: :signal_tower,
       version: "1.0.0",
-      elixir: "~> 1.0",
+      elixir: "~> 1.3",
       deps: deps
     ]
   end
@@ -31,9 +31,9 @@ defmodule SignalTower.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-      {:cowboy, "~> 1.0.0"},
-      {:poison, "~> 1.5"},
-      {:distillery, "~> 0.9"}
+      {:cowboy, "~> 1.1.2"},
+      {:poison, "~> 3.0.0"},
+      {:distillery, "~> 1.3.5"}
     ]
   end
 end
