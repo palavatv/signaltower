@@ -33,7 +33,7 @@ defmodule SignalTower.Mixfile do
     [
       {:cowboy, "~> 1.1.2"},
       {:poison, "~> 3.0.0"},
-      {:distillery, "~> 1.3.5"}
+      {:distillery, "~> 1.4.0"}
     ]
   end
 end
