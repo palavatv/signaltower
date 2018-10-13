@@ -107,7 +107,7 @@ defmodule RoomTest do
   end
 
   defp create_room(room_id) do
-    RoomSupervisor.get_room(room_id)
+    RoomSupervisor.create_room(room_id)
   end
 
   defp join_room(pid, room_pid) do

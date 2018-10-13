@@ -5,21 +5,14 @@ end
 defmodule SignalTower.Session do
   alias SignalTower.Room
   alias SignalTower.MsgIntegrity
-  alias SignalTower.Stats
-  use GenServer
 
   def init() do
     self()
     |> inspect()
     |> :base64.encode()
-    |> Kernel.<>("user_")
-    |> Process.register(self())
-
-    GenServer.cast Stats, :add_user
-  end
-
-  def destroy() do
-    GenServer.cast Stats, :remove_user
+    |> (& Kernel.<>("user_", &1)).()
+    |> String.to_atom()
+    |> (& Process.register(self(), &1)).()
   end
 
   def handle_message(msg, room) do

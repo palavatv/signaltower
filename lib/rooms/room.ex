@@ -26,7 +26,7 @@ defmodule SignalTower.Room do
   end
   
   def join_and_monitor(room_id, status) do
-    room_pid = RoomSupervisor.get_room(room_id)
+    room_pid = RoomSupervisor.create_room(room_id)
     Process.monitor(room_pid)
     own_id = GenServer.call(room_pid, {:join, self(), status})
     %RoomMembership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
@@ -35,12 +35,12 @@ defmodule SignalTower.Room do
   ## Callbacks ##
 
   def init(room_id) do
-    GenServer.cast Stats, :count_room
+    GenServer.cast Stats, {:room_created, self()}
     {:ok, {room_id, %{}}}
   end
 
   def handle_call {:join, pid, status}, _, {room_id,members} do
-    GenServer.cast Stats, :count_user
+    GenServer.cast Stats, {:update_room_peak, self(), Map.size(members) + 1}
 
     Process.monitor(pid)
     peer_id = get_next_id(members)

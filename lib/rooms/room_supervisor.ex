@@ -7,7 +7,7 @@ defmodule SignalTower.RoomSupervisor do
     Supervisor.start_link(__MODULE__, :ok, name: RoomSupervisor)
   end
 
-  def get_room(room_id) do
+  def create_room(room_id) do
     case Supervisor.start_child(RoomSupervisor, [room_id]) do
       {:ok, pid} -> pid
       {:error, {:already_started, pid}} -> pid

@@ -23,8 +23,11 @@ defmodule SignalTower do
   end
 
   defp start_supervisor({port, dispatch}) do
+    env_stats_file = System.get_env("PALAVA_STATS_FILE")
+    stats_file = if env_stats_file && env_stats_file != "", do: env_stats_file, else: "room-stats.csv"
     children = [
       supervisor(SignalTower.RoomSupervisor, []),
+      worker(SignalTower.Stats, [stats_file]),
       worker(:cowboy, [:http, 100, [port: port], [env: [dispatch: dispatch]]], function: :start_http)
     ]
     Supervisor.start_link(children, strategy: :one_for_one)
