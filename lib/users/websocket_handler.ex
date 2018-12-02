@@ -63,7 +63,6 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   def websocket_terminate(_reason, _req, _state) do
-    Session.destroy()
     :ok
   end
 end
