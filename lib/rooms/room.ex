@@ -51,6 +51,17 @@ defmodule SignalTower.Room do
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
   end
 
+  def handle_call {:leave, peer_id}, _, state do
+    case leave(peer_id, state) do
+      {:ok, state} ->
+        {:reply, :ok, state}
+      {:stop, state} ->
+        {:stop, :normal, :ok, state}
+      {:error, state} ->
+        {:reply, :error, state}
+    end
+  end
+
   defp get_next_id(members) do
     case Map.size(members) do
       0 -> "0"
@@ -82,16 +93,17 @@ defmodule SignalTower.Room do
     {:noreply, state}
   end
 
-  def handle_cast {:leave, peer_id}, state do
-    leave(peer_id, state)
-  end
-
   # invoked when a user session exits
   def handle_info {:DOWN, _ref, _, pid, _}, state = {_,members} do
     members
     |> Enum.find(fn {_,member} -> pid == member.pid end)
     |> case do
-      {id,_} -> leave(id, state)
+      {id,_} ->
+        case leave(id, state) do
+          {:ok, state}   -> {:noreply, state}
+          {:error,state} -> {:noreply, state}
+          {:stop,state}  -> {:stop, :normal, state}
+        end
       _ -> {:noreply, state}
     end
   end
@@ -101,12 +113,12 @@ defmodule SignalTower.Room do
       next_members = Map.delete(members, peer_id)
       if Map.size(next_members) > 0 do
         send_peer_left(next_members, peer_id)
-        {:noreply, {room_id, next_members}}
+        {:ok, {room_id, next_members}}
       else
-        {:stop, :normal, {room_id, next_members}}
+        {:stop, {room_id, next_members}}
       end
     else
-      {:noreply, state}
+      {:error, state}
     end
   end
 

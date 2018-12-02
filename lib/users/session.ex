@@ -31,11 +31,14 @@ defmodule SignalTower.Session do
 
   defp incoming_message(msg = %{"event" => "leave_room"}, room) do
     if room do
-      GenServer.cast room.pid, {:leave, room.own_id}
+      case GenServer.call room.pid, {:leave, room.own_id} do
+        :ok    -> nil
+        :error -> room
+      end
     else
       send_error("You are not currently in a room, so you can not leave it", msg)
+      room
     end
-    room
   end
 
   defp incoming_message(msg = %{"event" => "send_to_peer"}, room) do
@@ -49,8 +52,8 @@ defmodule SignalTower.Session do
   end
 
   # invoked when a room or the client exits
-  def handle_exit_message(pid, room) do
-    if pid == room.pid do
+  def handle_exit_message(pid, room, status) do
+    if room && pid == room.pid && status != :normal do
       # current room died => automatic rejoin
       Room.join_and_monitor(room.id, room.own_status)
     else

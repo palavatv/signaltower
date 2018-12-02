@@ -28,8 +28,8 @@ defmodule SignalTower.WebsocketHandler do
     {:ok, req, state}
   end
 
-  def websocket_info({:DOWN,_,_,pid,_}, _req, room) do
-    {:noreply, Session.handle_exit_message(pid, room)}
+  def websocket_info({:DOWN,_,_,pid,status}, req, room) do
+    {:ok, req, Session.handle_exit_message(pid, room, status)}
   end
 
   def websocket_info({:timeout, _ref, msg}, req, state) do
