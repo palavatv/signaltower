@@ -28,7 +28,7 @@ defmodule SignalTower do
     children = [
       supervisor(SignalTower.RoomSupervisor, []),
       worker(SignalTower.Stats, [stats_file]),
-      worker(:cowboy, [:http, 100, [port: port], [env: [dispatch: dispatch]]], function: :start_http)
+      worker(:cowboy, [:http, [port: port], %{env: %{dispatch: dispatch}}], function: :start_clear)
     ]
     Supervisor.start_link(children, strategy: :one_for_one)
   end

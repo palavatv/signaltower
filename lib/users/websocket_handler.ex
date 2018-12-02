@@ -1,54 +1,54 @@
 defmodule SignalTower.WebsocketHandler do
-  @behaviour :cowboy_websocket_handler
+  @behaviour :cowboy_websocket
 
   require Logger
   alias SignalTower.Session
 
-  def init({:tcp, :http}, _req, _opts) do
-    {:upgrade, :protocol, :cowboy_websocket}
+  def init(req,_state) do
+    {:cowboy_websocket, req, nil}
   end
 
-  def websocket_init(_transport_name, req, _opts) do
+  def websocket_init(state) do
     Session.init()
-    {:ok, req, nil}
+    {:ok, state}
   end
 
-  def websocket_handle({:text, msg}, req, room) do
+  def websocket_handle({:text, msg}, room) do
     case Poison.decode(msg) do
       {:ok, parsed_msg} ->
-        {:ok, req, Session.handle_message(parsed_msg, room)}
+        {:ok, Session.handle_message(parsed_msg, room)}
       _ ->
         answer = Poison.encode!(%{event: "error", description: "invalid json", received_msg: msg})
-        {:reply, {:text, answer}, req, room}
+        {:reply, {:text, answer}, room}
     end
   end
 
-  def websocket_handle(msg, req, state) do
+  def websocket_handle(msg, state) do
     Logger.warn "Unknown message: #{inspect(msg)}"
-    {:ok, req, state}
+    {:ok, state}
   end
 
-  def websocket_info({:DOWN,_,_,pid,status}, req, room) do
-    {:ok, req, Session.handle_exit_message(pid, room, status)}
+  def websocket_info({:DOWN,_,_,pid,status}, room) do
+    {:ok, Session.handle_exit_message(pid, room, status)}
   end
 
-  def websocket_info({:timeout, _ref, msg}, req, state) do
+  def websocket_info({:timeout, _ref, msg}, state) do
     Logger.debug "WebSocket timeout: #{inspect(msg)}"
-    {:reply, {:text, "{\"event\": \"error\", \"message\": \"WebSocket timeout: #{msg}\"}"}, req, state}
+    {:reply, {:text, "{\"event\": \"error\", \"message\": \"WebSocket timeout: #{msg}\"}"}, state}
   end
 
-  def websocket_info({:internal_error, msg}, req, state) do
+  def websocket_info({:internal_error, msg}, state) do
     Logger.warn "cowboy error: #{inspect(msg)}"
     #{:ok, reply} = Palava.handle_server_error(msg)
-    {:reply, {:text, "{\"event\": \"error\", \"message\": \"Internal Error: #{msg}\"}"}, req, state}
+    {:reply, {:text, "{\"event\": \"error\", \"message\": \"Internal Error: #{msg}\"}"}, state}
   end
 
-  def websocket_info(:kill, req, state) do
-    {:shutdown, req, state}
+  def websocket_info(:kill, state) do
+    {:shutdown, state}
   end
 
-  def websocket_info({:to_user, msg}, req, state) do
-    {:reply, {:text, internal_to_json(msg)}, req, state}
+  def websocket_info({:to_user, msg}, state) do
+    {:reply, {:text, internal_to_json(msg)}, state}
   end
 
   defp internal_to_json(msg) do
@@ -62,7 +62,7 @@ defmodule SignalTower.WebsocketHandler do
     end
   end
 
-  def websocket_terminate(_reason, _req, _state) do
+  def websocket_terminate(_reason, _state) do
     :ok
   end
 end
