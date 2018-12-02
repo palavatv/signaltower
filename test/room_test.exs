@@ -71,7 +71,7 @@ defmodule RoomTest do
     join_room(self(), room_pid)
 
     spawn_user room_pid, fn ->
-      GenServer.cast room_pid, {:leave, "1"}
+      GenServer.call room_pid, {:leave, "1"}
     end
     assert_receive _, 1000 # new peer
 
@@ -102,7 +102,7 @@ defmodule RoomTest do
     room_pid = create_room("r-room7")
     Process.monitor(room_pid)
     join_room(self(), room_pid)
-    GenServer.cast room_pid, {:leave, "0"}
+    GenServer.call room_pid, {:leave, "0"}
     assert_receive {:DOWN, _, :process, _, _}
   end
 
