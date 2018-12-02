@@ -1,0 +1,14 @@
+{
+  "name": "client-example",
+  "version": "1.0.0",
+  "description": "Example session with the signaltower",
+  "main": "example_session.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "ws": "latest"
+  },
+  "license": "GPL-3.0-or-later"
+}
