@@ -5,7 +5,7 @@ defmodule SignalTower.WebsocketHandler do
   alias SignalTower.Session
 
   def init(req,_state) do
-    {:cowboy_websocket, req, nil}
+    {:cowboy_websocket, req, nil, %{idle_timeout: 24 * 60 * 60 * 1000}}
   end
 
   def websocket_init(state) do
