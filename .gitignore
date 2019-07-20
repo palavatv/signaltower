@@ -4,5 +4,4 @@
 erl_crash.dump
 *.ez
 /logs
-/rel
 node_modules
