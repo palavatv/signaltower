@@ -32,8 +32,7 @@ defmodule SignalTower.Mixfile do
   defp deps do
     [
       {:cowboy, "~> 2.6.0"},
-      {:poison, "~> 4.0.1"},
-      {:distillery, "~> 2.0.12"}
+      {:poison, "~> 4.0.1"}
     ]
   end
 end
