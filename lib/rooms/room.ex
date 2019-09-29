@@ -40,7 +40,7 @@ defmodule SignalTower.Room do
   end
 
   def handle_call {:join, pid, status}, _, {room_id,members} do
-    GenServer.cast Stats, {:update_room_peak, self(), Map.size(members) + 1}
+    GenServer.cast Stats, {:update_room_peak, self(), map_size(members) + 1}
 
     Process.monitor(pid)
     peer_id = get_next_id(members)
@@ -63,7 +63,7 @@ defmodule SignalTower.Room do
   end
 
   defp get_next_id(members) do
-    case Map.size(members) do
+    case map_size(members) do
       0 -> "0"
       _ ->
         ((members |> Map.keys() |> Stream.map(&String.to_integer/1) |> Enum.max()) + 1)
@@ -111,7 +111,7 @@ defmodule SignalTower.Room do
   defp leave(peer_id, state = {room_id,members}) do
     if members[peer_id] do
       next_members = Map.delete(members, peer_id)
-      if Map.size(next_members) > 0 do
+      if map_size(next_members) > 0 do
         send_peer_left(next_members, peer_id)
         {:ok, {room_id, next_members}}
       else
