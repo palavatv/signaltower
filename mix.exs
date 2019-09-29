@@ -1,18 +1,16 @@
-defmodule SignalTower.Mixfile do
+defmodule SignalTower.MixProject do
   use Mix.Project
 
   def project do
     [
       app: :signal_tower,
-      version: "1.0.1",
-      elixir: "~> 1.7",
+      version: "1.1.0",
+      elixir: "~> 1.9",
       deps: deps()
     ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
+  # Run "mix help compile.app" to learn about applications.
   def application do
     [
       mod: { SignalTower, [] },
@@ -20,15 +18,7 @@ defmodule SignalTower.Mixfile do
     ]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type `mix help deps` for more examples and options
+  # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
       {:cowboy, "~> 2.6.0"},
