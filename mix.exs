@@ -26,7 +26,8 @@ defmodule SignalTower.MixProject do
       {:poison, "~> 4.0.1"},
       {:prometheus_ex, "~> 3.0"},
       {:elixir_uuid, "~> 1.2"},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
+      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 
