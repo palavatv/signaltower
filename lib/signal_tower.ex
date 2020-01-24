@@ -34,7 +34,7 @@ defmodule SignalTower do
       if env_stats_file && env_stats_file != "", do: env_stats_file, else: "room-stats.csv"
 
     children = [
-      supervisor(SignalTower.RoomSupervisor, []),
+      supervisor(SignalTower.Room.Supervisor, []),
       worker(SignalTower.Stats, [stats_file]),
       worker(:cowboy, [:http, [port: port], %{env: %{dispatch: dispatch}}], function: :start_clear)
     ]

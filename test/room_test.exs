@@ -2,7 +2,7 @@ defmodule RoomTest do
   use ExUnit.Case, async: true
   import TestHelper
 
-  alias SignalTower.RoomSupervisor
+  alias SignalTower.Room.Supervisor
 
   test "r-room exists" do
     create_room("r-room")
@@ -32,7 +32,7 @@ defmodule RoomTest do
                           event: "joined_room",
                           own_id: _,
                           peers: [
-                            %SignalTower.RoomMember{peer_id: _, status: %{standard: "status"}}
+                            %SignalTower.Room.Member{peer_id: _, status: %{standard: "status"}}
                           ]
                         }},
                        1000
@@ -138,7 +138,7 @@ defmodule RoomTest do
   end
 
   defp create_room(room_id) do
-    RoomSupervisor.create_room(room_id)
+    Supervisor.create_room(room_id)
   end
 
   defp join_room(pid, room_pid) do
