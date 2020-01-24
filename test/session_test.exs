@@ -1,5 +1,6 @@
 defmodule SessionTest do
   use ExUnit.Case, async: true
+  import TestHelper
 
   alias SignalTower.Session
 
@@ -174,10 +175,6 @@ defmodule SessionTest do
       end)
 
     wait_for_breaks(1)
-  end
-
-  defp wait_for_breaks(n) when n > 0 do
-    1..n |> Enum.each(fn _ -> assert_receive :break, 10000 end)
   end
 
   defp create_client(room_id \\ nil, leave_after_finish \\ false, fun) do

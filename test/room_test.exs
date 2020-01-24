@@ -1,5 +1,6 @@
 defmodule RoomTest do
   use ExUnit.Case, async: true
+  import TestHelper
 
   alias SignalTower.RoomSupervisor
 
@@ -144,10 +145,6 @@ defmodule RoomTest do
     GenServer.call(room_pid, {:join, pid, %{standard: "status"}})
     assert_receive {:to_user, %{event: "joined_room", own_id: own_id}}, 1000
     own_id
-  end
-
-  defp wait_for_breaks(n) when n > 0 do
-    1..n |> Enum.each(fn _ -> assert_receive :break, 10000 end)
   end
 
   defp spawn_user(room_pid, fun) do
