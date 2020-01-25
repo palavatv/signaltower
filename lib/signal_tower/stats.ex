@@ -4,14 +4,14 @@ defmodule SignalTower.Stats do
 
   ## API ##
 
-  def start_link(logfile) do
-    GenServer.start_link(__MODULE__, logfile, name: __MODULE__)
+  def start_link(log_file) do
+    GenServer.start_link(__MODULE__, log_file, name: __MODULE__)
   end
 
   ## Callbacks ##
 
-  def init(logfile) do
-    file = File.open!(logfile, [:write, :append])
+  def init(log_file) do
+    file = File.open!(log_file, [:write, :append])
     {:ok, {file, %{}}}
   end
 
