@@ -1,8 +1,10 @@
 defmodule SignalTower.MsgIntegrity do
-  def check(msg, room) do
+  @room_messages ["update_status", "send_to_peer", "add_user_to_call", "leave_room"]
+
+  def check(%{event: event} = msg, room) do
     with msg = prepare_message(msg),
          :ok <- check_completeness(msg),
-         :ok <- room_test(room, msg),
+         :ok <- check_room_event(room, event),
          do: {:ok, msg}
   end
 
@@ -19,56 +21,50 @@ defmodule SignalTower.MsgIntegrity do
   end
 
   defp fill_optional(msg) do
-    msg =
-      cond do
-        msg["event"] == "join_room" && !msg["status"] ->
-          Map.put(msg, "status", %{})
-
-        true ->
-          msg
-      end
-
-    msg
+    if msg["event"] == "join_room" && !msg["status"] do
+      Map.put(msg, "status", %{})
+    else
+      msg
+    end
   end
 
-  defp check_completeness(msg) do
-    complete =
-      case msg["event"] do
-        "join_room" ->
-          is_binary(msg["room_id"]) && is_map(msg["status"]) &&
-            (!msg["users_to_call"] || is_list(msg["users_to_call"]))
-
-        "leave_room" ->
-          is_binary(msg["room_id"])
-
-        "send_to_peer" ->
-          is_binary(msg["peer_id"]) && is_map(msg["data"])
-
-        "update_status" ->
-          is_map(msg["status"])
-
-        _ ->
-          false
-      end
-
-    case complete do
+  defp check_completeness(msg = %{"event" => event}) do
+    case complete?(event, msg) do
       true -> :ok
       false -> {:error, "unknown event name or missing/incorrect field(s)"}
     end
   end
 
-  defp room_test(room, msg) do
-    room_messages = ["update_status", "send_to_peer", "add_user_to_call", "leave_room"]
+  defp complete?("join_room", msg) do
+    is_binary(msg["room_id"]) && is_map(msg["status"]) &&
+      (!msg["users_to_call"] || is_list(msg["users_to_call"]))
+  end
 
-    if room || !Enum.member?(room_messages, msg["event"]) do
-      if room && msg["event"] == "join_room" do
-        {:error,
-         "You can only join one room with one session. Leave your current room before joining a new one"}
-      else
+  defp complete?("leave_room", msg) do
+    is_binary(msg["room_id"])
+  end
+
+  defp complete?("send_to_peer", msg) do
+    is_binary(msg["peer_id"]) && is_map(msg["data"])
+  end
+
+  defp complete?("update_status", msg) do
+    is_map(msg["status"])
+  end
+
+  defp check_room_event(room, event) do
+    if room || !Enum.member?(@room_messages, event) do
+      if valid_room_event?(room, event) do
         :ok
+      else
+        {:error,
+         "You can only join one room with one session. Leave your current room before joining a new one."}
       end
     else
       {:error, "Action only possible when in a room"}
     end
   end
+
+  defp valid_room_event?(room, "join_room") when not is_nil(room), do: false
+  defp valid_room_event?(_room, _event), do: true
 end
