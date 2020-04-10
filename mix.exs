@@ -14,7 +14,7 @@ defmodule SignalTower.MixProject do
   def application do
     [
       mod: { SignalTower, [] },
-      applications: [:logger, :cowboy, :poison]
+      applications: [:logger, :cowboy, :poison, :prometheus_ex]
     ]
   end
 
@@ -23,7 +23,8 @@ defmodule SignalTower.MixProject do
     [
       {:cowboy, "~> 2.6.0"},
       {:poison, "~> 4.0.1"},
-      {:distillery, "~> 2.0.12"}
+      {:distillery, "~> 2.0.12"},
+      {:prometheus_ex, "~> 3.0"}
     ]
   end
 end
