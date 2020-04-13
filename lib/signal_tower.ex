@@ -16,10 +16,8 @@ defmodule SignalTower do
     {port, _} = Integer.parse(System.get_env("PALAVA_RTC_ADDRESS") || "4233")
 
     dispatch = :cowboy_router.compile([
-      {:_, [
-        {"/", SignalTower.WebsocketHandler, []},
-        {"/metrics", SignalTower.PrometheusHTTPHandler, []}
-      ]}
+      {"localhost", [{"/metrics", SignalTower.PrometheusHTTPHandler, []}]},
+      {:_,          [{"/", SignalTower.WebsocketHandler, []}]}
     ])
 
     {port, dispatch}
