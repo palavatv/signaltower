@@ -18,14 +18,14 @@ defmodule SignalTower.Stats do
     file = File.open!(logfile, [:write,:append])
     {:ok, {file, %{}}}
   end
- 
+
   def handle_cast({:room_created, pid}, {file, room_sessions}) do
     Process.monitor(pid)
     time = DateTime.utc_now()
     new_session = %RoomSession{pid: pid, create_time: time, peak_time: time}
     {:noreply, {file, Map.put(room_sessions, pid, new_session)}}
   end
- 
+
   def handle_cast({:update_room_peak, pid, count}, {file, room_sessions}) do
     if room_sessions[pid] && room_sessions[pid].peak_user_count < count do
       updated_room_sessions = room_sessions
@@ -50,5 +50,33 @@ defmodule SignalTower.Stats do
         IO.binwrite(file, log_line <> "\n")
         {:noreply, {file, updated_room_sessions}}
     end
+  end
+end
+
+defmodule SignalTower.PrometheusStats do
+  use Prometheus.Metric
+  @counter [name: :palava_joined_room_total,
+            labels: [],
+            help: "Number of peers joined a room"]
+
+  @counter [name: :palava_leave_room_total,
+            labels: [],
+            help: "Number of peers left a room"]
+
+  def reset() do
+    Counter.reset(name: :palava_joined_room_total)
+    Counter.reset(name: :palava_leave_room_total)
+  end
+
+  def join() do
+    Counter.inc(name: :palava_joined_room_total)
+  end
+
+  def leave() do
+    Counter.inc(name: :palava_leave_room_total)
+  end
+
+  def to_string() do
+    Prometheus.Format.Text.format
   end
 end

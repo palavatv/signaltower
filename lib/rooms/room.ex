@@ -24,7 +24,7 @@ defmodule SignalTower.Room do
     name = "room_#{room_id}" |> String.to_atom
     GenServer.start_link(__MODULE__, room_id, name: name)
   end
-  
+
   def join_and_monitor(room_id, status) do
     room_pid = RoomSupervisor.create_room(room_id)
     Process.monitor(room_pid)
@@ -46,6 +46,7 @@ defmodule SignalTower.Room do
     peer_id = get_next_id(members)
     send_joined_room(pid, peer_id, members)
     send_new_peer(members, peer_id, status)
+    SignalTower.PrometheusStats.join
 
     new_member = %RoomMember{peer_id: peer_id, pid: pid, status: status}
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
@@ -110,6 +111,7 @@ defmodule SignalTower.Room do
 
   defp leave(peer_id, state = {room_id,members}) do
     if members[peer_id] do
+      SignalTower.PrometheusStats.leave
       next_members = Map.delete(members, peer_id)
       if map_size(next_members) > 0 do
         send_peer_left(next_members, peer_id)
