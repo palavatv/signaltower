@@ -1,4 +1,4 @@
-ExUnit.start
+ExUnit.start()
 
 defmodule TestHelper do
   use ExUnit.Case

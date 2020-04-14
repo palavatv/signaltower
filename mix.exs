@@ -13,7 +13,7 @@ defmodule SignalTower.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      mod: { SignalTower, [] },
+      mod: {SignalTower, []},
       applications: [:logger, :cowboy, :poison, :prometheus_ex]
     ]
   end
