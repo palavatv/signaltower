@@ -10,15 +10,16 @@ defmodule SignalTower.Session do
     self()
     |> inspect()
     |> :base64.encode()
-    |> (& Kernel.<>("user_", &1)).()
+    |> (&Kernel.<>("user_", &1)).()
     |> String.to_atom()
-    |> (& Process.register(self(), &1)).()
+    |> (&Process.register(self(), &1)).()
   end
 
   def handle_message(msg, room) do
     case MsgIntegrity.check(msg, room) do
       {:ok, msg} ->
         incoming_message(msg, room)
+
       {:error, error} ->
         send_error(error, msg)
         room
@@ -31,8 +32,8 @@ defmodule SignalTower.Session do
 
   defp incoming_message(msg = %{"event" => "leave_room"}, room) do
     if room do
-      case GenServer.call room.pid, {:leave, room.own_id} do
-        :ok    -> nil
+      case GenServer.call(room.pid, {:leave, room.own_id}) do
+        :ok -> nil
         :error -> room
       end
     else
@@ -42,12 +43,12 @@ defmodule SignalTower.Session do
   end
 
   defp incoming_message(msg = %{"event" => "send_to_peer"}, room) do
-    GenServer.cast room.pid, {:send_to_peer, msg["peer_id"], msg["data"], room.own_id}
+    GenServer.cast(room.pid, {:send_to_peer, msg["peer_id"], msg["data"], room.own_id})
     room
   end
 
   defp incoming_message(msg = %{"event" => "update_status"}, room) do
-    GenServer.cast room.pid, {:update_status, room.own_id, msg["status"]}
+    GenServer.cast(room.pid, {:update_status, room.own_id, msg["status"]})
     room
   end
 
@@ -62,10 +63,14 @@ defmodule SignalTower.Session do
   end
 
   defp send_error(error, received_msg) do
-    send self(), {:to_user, %{
-      event: "error",
-      description: error,
-      received_msg: received_msg
-    }}
+    send(
+      self(),
+      {:to_user,
+       %{
+         event: "error",
+         description: error,
+         received_msg: received_msg
+       }}
+    )
   end
 end

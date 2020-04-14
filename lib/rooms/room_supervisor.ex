@@ -18,6 +18,7 @@ defmodule SignalTower.RoomSupervisor do
     children = [
       worker(SignalTower.Room, [], restart: :transient)
     ]
+
     supervise(children, strategy: :simple_one_for_one)
   end
 end
