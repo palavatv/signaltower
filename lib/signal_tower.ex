@@ -11,7 +11,7 @@ defmodule SignalTower do
     :ok
   end
 
-  defp start_cowboy() do
+  #defp start_cowboy() do
     {port, _} = Integer.parse(System.get_env("PALAVA_RTC_ADDRESS") || "4233")
 
     dispatch =
