@@ -1,7 +1,9 @@
 signal tower
 ===========
 
-signal tower is a signaling server for webrtc applications written in Elixir. It is based on the palava signaling protocol (https://github.com/palavatv/palava-client/wiki/Protocol) over websockets and it is used in the palava project (https://github.com/palavatv/palava).
+signal tower is a signaling server for webrtc applications written in Elixir.
+
+It is based on the palava signaling protocol (https://github.com/palavatv/palava-client/wiki/Protocol) over websockets and it is used in the palava project (https://github.com/palavatv/palava).
 
 Install:
 ```
