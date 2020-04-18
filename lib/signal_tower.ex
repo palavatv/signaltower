@@ -16,7 +16,11 @@ defmodule SignalTower do
 
     dispatch =
       :cowboy_router.compile([
-        {"localhost", [{"/metrics", SignalTower.PrometheusHTTPHandler, []}]},
+        {"localhost",
+         [
+           {"/", SignalTower.WebsocketHandler, []},
+           {"/metrics", SignalTower.PrometheusHTTPHandler, []}
+         ]},
         {:_, [{"/", SignalTower.WebsocketHandler, []}]}
       ])
 
