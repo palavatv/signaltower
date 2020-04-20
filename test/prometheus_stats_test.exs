@@ -4,8 +4,33 @@ defmodule PrometheusStatsTest do
   alias SignalTower.PrometheusStats
 
   test "should return text formated metrics" do
-    assert String.match?(PrometheusStats.to_string(), ~r/palava_joined_room_total/)
-    assert String.match?(PrometheusStats.to_string(), ~r/palava_leave_room_total/)
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_created_total/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_closed_total/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_joined_room_total/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_leave_room_total/))
+  end
+
+  test "should reset metrics" do
+    PrometheusStats.reset()
+    metric_map = to_map(PrometheusStats.to_string())
+    assert("0" == metric_map["palava_room_created_total"])
+    assert("0" == metric_map["palava_room_closed_total"])
+    assert("0" == metric_map["palava_joined_room_total"])
+    assert("0" == metric_map["palava_leave_room_total"])
+  end
+
+  test "should increment on room created" do
+    PrometheusStats.reset()
+    PrometheusStats.room_created()
+    metric_map = to_map(PrometheusStats.to_string())
+    assert("1" == metric_map["palava_room_created_total"])
+  end
+
+  test "should increment on room closed" do
+    PrometheusStats.reset()
+    PrometheusStats.room_closed()
+    metric_map = to_map(PrometheusStats.to_string())
+    assert("1" == metric_map["palava_room_closed_total"])
   end
 
   test "should increment on join" do

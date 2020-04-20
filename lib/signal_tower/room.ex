@@ -23,6 +23,7 @@ defmodule SignalTower.Room do
 
   def init(room_id) do
     GenServer.cast(Stats, {:room_created, self()})
+    SignalTower.PrometheusStats.room_created()
     {:ok, {room_id, %{}}}
   end
 
@@ -101,6 +102,7 @@ defmodule SignalTower.Room do
         send_peer_left(next_members, peer_id)
         {:ok, {room_id, next_members}}
       else
+        SignalTower.PrometheusStats.room_closed()
         {:stop, {room_id, next_members}}
       end
     else
