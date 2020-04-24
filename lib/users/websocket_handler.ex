@@ -25,7 +25,7 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   def websocket_handle(msg, state) do
-    Logger.warn("Unknown message: #{inspect(msg)}")
+    Logger.warn("Unknown handle message: #{inspect(msg)}")
     {:ok, state}
   end
 
@@ -33,23 +33,13 @@ defmodule SignalTower.WebsocketHandler do
     {:ok, Session.handle_exit_message(pid, room, status)}
   end
 
-  def websocket_info({:timeout, _ref, msg}, state) do
-    Logger.debug("WebSocket timeout: #{inspect(msg)}")
-    {:reply, {:text, "{\"event\": \"error\", \"message\": \"WebSocket timeout: #{msg}\"}"}, state}
-  end
-
-  def websocket_info({:internal_error, msg}, state) do
-    Logger.warn("cowboy error: #{inspect(msg)}")
-    # {:ok, reply} = Palava.handle_server_error(msg)
-    {:reply, {:text, "{\"event\": \"error\", \"message\": \"Internal Error: #{msg}\"}"}, state}
-  end
-
-  def websocket_info(:kill, state) do
-    {:shutdown, state}
-  end
-
   def websocket_info({:to_user, msg}, state) do
     {:reply, {:text, internal_to_json(msg)}, state}
+  end
+
+  def websocket_info(msg, state) do
+    Logger.warn("Unknown info message: #{inspect(msg)}")
+    {:ok, state}
   end
 
   defp internal_to_json(msg) do
@@ -62,12 +52,24 @@ defmodule SignalTower.WebsocketHandler do
           "Sending message: Could not transform internal object to JSON: #{inspect(msg)}"
         )
 
-        error_msg = Poison.encode!(%{event: "error", message: "internal_server_error"})
-        error_msg
+        Poison.encode!(%{event: "error", message: "internal_server_error"})
     end
   end
 
-  def websocket_terminate(_reason, _state) do
+  def terminate(reason, _partialreq, room) do
+    if room, do: Session.handle_message(%{"event" => "leave_room"}, room)
+
+    case reason do
+      {:error, reason} ->
+        Logger.warn("websocket error: #{reason}")
+
+      {:crash, class, reason} ->
+        Logger.warn("websocket crash. class: #{class}, reason: #{reason}")
+
+      _ ->
+        :ok
+    end
+
     :ok
   end
 end

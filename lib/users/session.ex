@@ -52,13 +52,13 @@ defmodule SignalTower.Session do
     room
   end
 
-  # invoked when a room or the client exits
+  # invoked when a room exits
   def handle_exit_message(pid, room, status) do
     if room && pid == room.pid && status != :normal do
       # current room died => automatic rejoin
       Room.join_and_monitor(room.id, room.own_status)
     else
-      room
+      nil
     end
   end
 
