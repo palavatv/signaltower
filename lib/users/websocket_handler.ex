@@ -57,14 +57,12 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   def terminate(reason, _partialreq, room) do
-    if room, do: Session.handle_message(%{"event" => "leave_room"}, room)
-
     case reason do
-      {:error, reason} ->
-        Logger.warn("websocket error: #{reason}")
+      {:error, error} ->
+        Logger.warn("websocket error: #{error}")
 
-      {:crash, class, reason} ->
-        Logger.warn("websocket crash. class: #{class}, reason: #{reason}")
+      {:crash, class, error} ->
+        Logger.warn("websocket crash. class: #{class}, reason: #{error}")
 
       _ ->
         :ok
