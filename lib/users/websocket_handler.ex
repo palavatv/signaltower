@@ -4,15 +4,18 @@ defmodule SignalTower.WebsocketHandler do
   require Logger
   alias SignalTower.Session
 
+  @impl :cowboy_websocket
   def init(req, _state) do
     {:cowboy_websocket, req, nil, %{idle_timeout: 24 * 60 * 60 * 1000}}
   end
 
+  @impl :cowboy_websocket
   def websocket_init(state) do
     Session.init()
     {:ok, state}
   end
 
+  @impl :cowboy_websocket
   def websocket_handle({:text, msg}, room) do
     case Poison.decode(msg) do
       {:ok, parsed_msg} ->
@@ -24,19 +27,23 @@ defmodule SignalTower.WebsocketHandler do
     end
   end
 
+  @impl :cowboy_websocket
   def websocket_handle(msg, state) do
     Logger.warn("Unknown handle message: #{inspect(msg)}")
     {:ok, state}
   end
 
+  @impl :cowboy_websocket
   def websocket_info({:DOWN, _, _, pid, status}, room) do
     {:ok, Session.handle_exit_message(pid, room, status)}
   end
 
+  @impl :cowboy_websocket
   def websocket_info({:to_user, msg}, state) do
     {:reply, {:text, internal_to_json(msg)}, state}
   end
 
+  @impl :cowboy_websocket
   def websocket_info(msg, state) do
     Logger.warn("Unknown info message: #{inspect(msg)}")
     {:ok, state}
@@ -56,7 +63,8 @@ defmodule SignalTower.WebsocketHandler do
     end
   end
 
-  def terminate(reason, _partialreq, room) do
+  @impl :cowboy_websocket
+  def terminate(reason, _partialreq, _room) do
     case reason do
       {:error, error} ->
         Logger.warn("websocket error: #{error}")
