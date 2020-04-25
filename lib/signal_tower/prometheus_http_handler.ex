@@ -1,7 +1,7 @@
 defmodule SignalTower.PrometheusHTTPHandler do
   def init(req, _state) do
     headers = :cowboy_req.headers(req)
-    body = SignalTower.Stats.Prometheus.to_string()
+    body = SignalTower.PrometheusStats.to_string()
 
     reply = :cowboy_req.reply(200, headers, body, req)
     {:ok, reply, :no_state}

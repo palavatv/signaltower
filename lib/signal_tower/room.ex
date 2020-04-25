@@ -3,6 +3,7 @@ defmodule SignalTower.Room do
 
   alias SignalTower.Room.{Member, Membership, Supervisor}
   alias SignalTower.Stats
+  alias SignalTower.PrometheusStats
 
   ## API ##
 
@@ -32,7 +33,7 @@ defmodule SignalTower.Room do
     peer_id = UUID.uuid1()
     send_joined_room(pid, peer_id, members)
     send_new_peer(members, peer_id, status)
-    Stats.Prometheus.join()
+    PrometheusStats.join()
 
     new_member = %Member{peer_id: peer_id, pid: pid, status: status}
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
@@ -93,7 +94,7 @@ defmodule SignalTower.Room do
 
   defp leave(peer_id, state = {room_id, members}) do
     if members[peer_id] do
-      Stats.Prometheus.leave()
+      PrometheusStats.leave()
       next_members = Map.delete(members, peer_id)
 
       if map_size(next_members) > 0 do

@@ -1,24 +1,24 @@
 defmodule PrometheusStatsTest do
   use ExUnit.Case
 
-  alias SignalTower.Stats.Prometheus
+  alias SignalTower.PrometheusStats
 
   test "should return text formated metrics" do
-    assert String.match?(Prometheus.to_string(), ~r/palava_joined_room_total/)
-    assert String.match?(Prometheus.to_string(), ~r/palava_leave_room_total/)
+    assert String.match?(PrometheusStats.to_string(), ~r/palava_joined_room_total/)
+    assert String.match?(PrometheusStats.to_string(), ~r/palava_leave_room_total/)
   end
 
   test "should increment on join" do
-    Prometheus.reset()
-    Prometheus.join()
-    metric_map = to_map(Prometheus.to_string())
+    PrometheusStats.reset()
+    PrometheusStats.join()
+    metric_map = to_map(PrometheusStats.to_string())
     assert "1" == metric_map["palava_joined_room_total"]
   end
 
   test "should increment on leave" do
-    Prometheus.reset()
-    Prometheus.leave()
-    metric_map = to_map(Prometheus.to_string())
+    PrometheusStats.reset()
+    PrometheusStats.leave()
+    metric_map = to_map(PrometheusStats.to_string())
     assert "1" == metric_map["palava_leave_room_total"]
   end
 
