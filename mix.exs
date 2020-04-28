@@ -15,7 +15,7 @@ defmodule SignalTower.MixProject do
   def application do
     [
       mod: {SignalTower, []},
-      applications: [:logger, :cowboy, :poison, :prometheus_ex]
+      applications: [:logger, :cowboy, :poison, :prometheus_ex, :elixir_uuid]
     ]
   end
 
