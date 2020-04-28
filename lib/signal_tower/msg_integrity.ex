@@ -1,7 +1,7 @@
 defmodule SignalTower.MsgIntegrity do
   @room_messages ["update_status", "send_to_peer", "add_user_to_call", "leave_room"]
 
-  def check(%{event: event} = msg, room) do
+  def check(%{"event" => event} = msg, room) do
     with msg = prepare_message(msg),
          :ok <- check_completeness(msg),
          :ok <- check_room_event(room, event),
