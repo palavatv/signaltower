@@ -1,27 +1,33 @@
 signal tower
 ===========
 
-signal tower is a signaling server for webrtc applications written in Elixir.
+Signal tower is a signaling server for WebRTC applications written in Elixir.
 
-It is based on the palava signaling protocol (https://github.com/palavatv/palava-client/wiki/Protocol) over websockets and it is used in the palava project (https://github.com/palavatv/palava).
+It is based on the [palava signaling protocol][palava protocol] over websockets and is used in the [palava project][palava project].
 
-Install:
+**Install:**
 ```
 mix deps.get
 mix deps.compile
 ```
 
-Test:
+**Test:**
 ```
 mix test
 ```
 
-Start locally:
+You can also watch file changes and rerun tests automatically:
+
+```
+mix test.watch
+```
+
+**Start locally:**
 ```
 ./start.sh or ./start_daemon.sh
 ```
 
-Release and use in production:
+**Release and use in production:**
 ```
 mix release production
 ```
@@ -30,3 +36,6 @@ By default, the websocket port 4233 is used, you can change it via:
 ```
 export PALAVA_RTC_ADDRESS=1234
 ```
+
+[palava protocol]: https://github.com/palavatv/palava-client/wiki/Protocol
+[palava project]: https://github.com/palavatv/palava
