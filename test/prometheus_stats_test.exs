@@ -1,23 +1,25 @@
 defmodule PrometheusStatsTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case
+
+  alias SignalTower.PrometheusStats
 
   test "should return text formated metrics" do
-    assert(String.match?(SignalTower.PrometheusStats.to_string(), ~r/palava_joined_room_total/))
-    assert(String.match?(SignalTower.PrometheusStats.to_string(), ~r/palava_leave_room_total/))
+    assert String.match?(PrometheusStats.to_string(), ~r/palava_joined_room_total/)
+    assert String.match?(PrometheusStats.to_string(), ~r/palava_leave_room_total/)
   end
 
   test "should increment on join" do
-    SignalTower.PrometheusStats.reset()
-    SignalTower.PrometheusStats.join()
-    metric_map = to_map(SignalTower.PrometheusStats.to_string())
-    assert("1" == metric_map["palava_joined_room_total"])
+    PrometheusStats.reset()
+    PrometheusStats.join()
+    metric_map = to_map(PrometheusStats.to_string())
+    assert "1" == metric_map["palava_joined_room_total"]
   end
 
   test "should increment on leave" do
-    SignalTower.PrometheusStats.reset()
-    SignalTower.PrometheusStats.leave()
-    metric_map = to_map(SignalTower.PrometheusStats.to_string())
-    assert("1" == metric_map["palava_leave_room_total"])
+    PrometheusStats.reset()
+    PrometheusStats.leave()
+    metric_map = to_map(PrometheusStats.to_string())
+    assert "1" == metric_map["palava_leave_room_total"]
   end
 
   defp to_map(text) do

@@ -1,22 +1,9 @@
-defmodule SignalTower.RoomMember do
-  defstruct peer_id: nil, pid: nil, status: nil
-
-  defimpl Poison.Encoder do
-    def encode(member, options) do
-      member
-      |> Map.from_struct()
-      |> Map.delete(:pid)
-      |> Poison.Encoder.Map.encode(options)
-    end
-  end
-end
-
 defmodule SignalTower.Room do
-  alias SignalTower.RoomSupervisor
-  alias SignalTower.RoomMember
-  alias SignalTower.RoomMembership
-  alias SignalTower.Stats
   use GenServer
+
+  alias SignalTower.Room.{Member, Membership, Supervisor}
+  alias SignalTower.Stats
+  alias SignalTower.PrometheusStats
 
   ## API ##
 
@@ -26,10 +13,10 @@ defmodule SignalTower.Room do
   end
 
   def join_and_monitor(room_id, status) do
-    room_pid = RoomSupervisor.create_room(room_id)
+    room_pid = Supervisor.create_room(room_id)
     Process.monitor(room_pid)
     own_id = GenServer.call(room_pid, {:join, self(), status})
-    %RoomMembership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
+    %Membership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
   end
 
   ## Callbacks ##
@@ -46,9 +33,9 @@ defmodule SignalTower.Room do
     peer_id = UUID.uuid1()
     send_joined_room(pid, peer_id, members)
     send_new_peer(members, peer_id, status)
-    SignalTower.PrometheusStats.join()
+    PrometheusStats.join()
 
-    new_member = %RoomMember{peer_id: peer_id, pid: pid, status: status}
+    new_member = %Member{peer_id: peer_id, pid: pid, status: status}
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
   end
 
@@ -107,7 +94,7 @@ defmodule SignalTower.Room do
 
   defp leave(peer_id, state = {room_id, members}) do
     if members[peer_id] do
-      SignalTower.PrometheusStats.leave()
+      PrometheusStats.leave()
       next_members = Map.delete(members, peer_id)
 
       if map_size(next_members) > 0 do

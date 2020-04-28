@@ -1,24 +1,17 @@
-defmodule SignalTower.Stats.RoomSession do
-  defstruct pid: nil,
-            create_time: DateTime.utc_now(),
-            peak_time: DateTime.utc_now(),
-            peak_user_count: 0
-end
-
 defmodule SignalTower.Stats do
   alias SignalTower.Stats.RoomSession
   use GenServer
 
   ## API ##
 
-  def start_link(logfile) do
-    GenServer.start_link(__MODULE__, logfile, name: __MODULE__)
+  def start_link(log_file) do
+    GenServer.start_link(__MODULE__, log_file, name: __MODULE__)
   end
 
   ## Callbacks ##
 
-  def init(logfile) do
-    file = File.open!(logfile, [:write, :append])
+  def init(log_file) do
+    file = File.open!(log_file, [:write, :append])
     {:ok, {file, %{}}}
   end
 
@@ -62,29 +55,5 @@ defmodule SignalTower.Stats do
         IO.binwrite(file, log_line <> "\n")
         {:noreply, {file, updated_room_sessions}}
     end
-  end
-end
-
-defmodule SignalTower.PrometheusStats do
-  use Prometheus.Metric
-  @counter [name: :palava_joined_room_total, labels: [], help: "Number of peers joined a room"]
-
-  @counter [name: :palava_leave_room_total, labels: [], help: "Number of peers left a room"]
-
-  def reset() do
-    Counter.reset(name: :palava_joined_room_total)
-    Counter.reset(name: :palava_leave_room_total)
-  end
-
-  def join() do
-    Counter.inc(name: :palava_joined_room_total)
-  end
-
-  def leave() do
-    Counter.inc(name: :palava_leave_room_total)
-  end
-
-  def to_string() do
-    Prometheus.Format.Text.format()
   end
 end

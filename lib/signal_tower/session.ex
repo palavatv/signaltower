@@ -1,7 +1,3 @@
-defmodule SignalTower.RoomMembership do
-  defstruct id: "", pid: nil, own_id: "", own_status: %{}
-end
-
 defmodule SignalTower.Session do
   alias SignalTower.Room
   alias SignalTower.MsgIntegrity
