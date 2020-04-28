@@ -7,7 +7,7 @@ defmodule SessionTest do
     host_pid = self()
 
     _client1 =
-      create_client(fn _ ->
+      create_client(fn _, _ ->
         Session.handle_message(
           %{
             event: "join_room",
@@ -20,7 +20,7 @@ defmodule SessionTest do
         assert_receive {:to_user,
                         %{
                           event: "joined_room",
-                          own_id: "0",
+                          own_id: _,
                           peers: []
                         }},
                        1000
@@ -30,7 +30,7 @@ defmodule SessionTest do
         assert_receive {:to_user,
                         %{
                           event: "new_peer",
-                          peer_id: "1",
+                          peer_id: _,
                           status: %{user: "1"}
                         }},
                        1000
@@ -38,7 +38,7 @@ defmodule SessionTest do
         assert_receive {:to_user,
                         %{
                           event: "peer_left",
-                          sender_id: "1"
+                          sender_id: _
                         }},
                        1000
       end)
@@ -46,7 +46,7 @@ defmodule SessionTest do
     wait_for_breaks(1)
 
     _client2 =
-      create_client(nil, true, fn _ ->
+      create_client(nil, true, fn _, _ ->
         Session.handle_message(
           %{
             event: "join_room",
@@ -59,8 +59,8 @@ defmodule SessionTest do
         assert_receive {:to_user,
                         %{
                           event: "joined_room",
-                          own_id: "1",
-                          peers: [%{peer_id: "0", status: %{user: "0"}}]
+                          own_id: _,
+                          peers: [%{peer_id: _, status: %{user: "0"}}]
                         }},
                        1000
       end)
@@ -70,7 +70,7 @@ defmodule SessionTest do
 
   test "leave explicitly" do
     _client1 =
-      create_client("s-room13", fn room ->
+      create_client("s-room13", fn room, _ ->
         Session.handle_message(
           %{
             event: "leave_room",
@@ -81,32 +81,37 @@ defmodule SessionTest do
       end)
 
     _client2 =
-      create_client("s-room13", fn _ ->
-        assert_receive {:to_user, %{event: "peer_left", sender_id: "0"}}, 1000
+      create_client("s-room13", fn _, _ ->
+        assert_receive {:to_user, %{event: "peer_left", sender_id: _}}, 1000
       end)
 
     wait_for_breaks(2)
   end
 
   test "send to peer" do
-    _client1 =
-      create_client("s-room5", fn room ->
-        Session.handle_message(
-          %{
-            event: "send_to_peer",
-            peer_id: "1",
-            data: %{some: "data"}
-          },
-          room
-        )
+    client1 =
+      create_client("s-room5", fn room, _ ->
+        receive do
+          peer_id ->
+            Session.handle_message(
+              %{
+                event: "send_to_peer",
+                peer_id: peer_id,
+                data: %{some: "data"}
+              },
+              room
+            )
+        end
       end)
 
     _client2 =
-      create_client("s-room5", fn _ ->
+      create_client("s-room5", fn _, own_id ->
+        send(client1, own_id)
+
         assert_receive {:to_user,
                         %{
                           some: "data",
-                          sender_id: "0"
+                          sender_id: _
                         }},
                        1000
       end)
@@ -116,7 +121,7 @@ defmodule SessionTest do
 
   test "update status" do
     _client1 =
-      create_client("s-room6", fn room ->
+      create_client("s-room6", fn room, _ ->
         Session.handle_message(
           %{
             event: "update_status",
@@ -127,11 +132,11 @@ defmodule SessionTest do
       end)
 
     _client2 =
-      create_client("s-room6", fn _ ->
+      create_client("s-room6", fn _, _ ->
         assert_receive {:to_user,
                         %{
                           event: "peer_updated_status",
-                          sender_id: "0",
+                          sender_id: _,
                           status: %{some: "status"}
                         }},
                        1000
@@ -142,7 +147,7 @@ defmodule SessionTest do
 
   test "not possible to use certain events when not in a room" do
     _client1 =
-      create_client(fn _ ->
+      create_client(fn _, _ ->
         room =
           Session.handle_message(
             %{
@@ -180,17 +185,17 @@ defmodule SessionTest do
 
     pid =
       spawn_link(fn ->
-        room =
+        {room, own_id} =
           case room_id do
             nil ->
               send(host, :start)
-              nil
+              {nil, ""}
 
             room_id ->
               join_room(room_id, host)
           end
 
-        fun.(room)
+        fun.(room, own_id)
         send(host, :break)
         unless leave_after_finish, do: :timer.sleep(:infinity)
       end)
@@ -215,6 +220,6 @@ defmodule SessionTest do
     assert_receive {:to_user, m}, 1000
     # wait for second peer
     if length(m[:peers]) == 0, do: assert_receive({:to_user, %{event: "new_peer"}}, 1000)
-    room
+    {room, m[:own_id]}
   end
 end

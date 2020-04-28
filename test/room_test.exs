@@ -12,11 +12,11 @@ defmodule RoomTest do
     room_pid = create_room("r-room2")
 
     _user1 =
-      spawn_user(room_pid, fn ->
+      spawn_user(room_pid, fn _ ->
         assert_receive {:to_user,
                         %{
                           event: "new_peer",
-                          peer_id: "1",
+                          peer_id: _,
                           status: %{user: "1"}
                         }},
                        1000
@@ -29,9 +29,9 @@ defmodule RoomTest do
         assert_receive {:to_user,
                         %{
                           event: "joined_room",
-                          own_id: "1",
+                          own_id: _,
                           peers: [
-                            %SignalTower.RoomMember{peer_id: "0", status: %{standard: "status"}}
+                            %SignalTower.RoomMember{peer_id: _, status: %{standard: "status"}}
                           ]
                         }},
                        1000
@@ -43,21 +43,25 @@ defmodule RoomTest do
   test "send to peer" do
     room_pid = create_room("r-room3")
 
-    _user1 =
-      spawn_user(room_pid, fn ->
+    user1 =
+      spawn_user(room_pid, fn own_id ->
         assert_receive {:to_user, %{event: "new_peer"}}, 1000
+
+        assert_receive peer_id, 1000
+
+        GenServer.cast(room_pid, {:send_to_peer, peer_id, %{hello: "world"}, own_id})
+      end)
+
+    _user2 =
+      spawn_user(room_pid, fn own_id ->
+        send(user1, own_id)
 
         assert_receive {:to_user,
                         %{
                           hello: "world",
-                          sender_id: "1"
+                          sender_id: _
                         }},
                        1000
-      end)
-
-    _user2 =
-      spawn_user(room_pid, fn ->
-        GenServer.cast(room_pid, {:send_to_peer, "0", %{hello: "world"}, "1"})
       end)
 
     wait_for_breaks(2)
@@ -67,8 +71,8 @@ defmodule RoomTest do
     room_pid = create_room("r-room4")
     join_room(self(), room_pid)
 
-    spawn_user(room_pid, fn ->
-      GenServer.cast(room_pid, {:update_status, "1", %{new: "status"}})
+    spawn_user(room_pid, fn own_id ->
+      GenServer.cast(room_pid, {:update_status, own_id, %{new: "status"}})
     end)
 
     # new_peer
@@ -77,7 +81,7 @@ defmodule RoomTest do
     assert_receive {:to_user,
                     %{
                       event: "peer_updated_status",
-                      sender_id: "1",
+                      sender_id: _,
                       status: %{new: "status"}
                     }},
                    1000
@@ -87,8 +91,8 @@ defmodule RoomTest do
     room_pid = create_room("r-room5")
     join_room(self(), room_pid)
 
-    spawn_user(room_pid, fn ->
-      GenServer.call(room_pid, {:leave, "1"})
+    spawn_user(room_pid, fn own_id ->
+      GenServer.call(room_pid, {:leave, own_id})
     end)
 
     # new peer
@@ -97,7 +101,7 @@ defmodule RoomTest do
     assert_receive {:to_user,
                     %{
                       event: "peer_left",
-                      sender_id: "1"
+                      sender_id: _
                     }},
                    # peer left
                    1000
@@ -119,7 +123,7 @@ defmodule RoomTest do
     assert_receive {:to_user,
                     %{
                       event: "peer_left",
-                      sender_id: "1"
+                      sender_id: _
                     }},
                    1000
   end
@@ -127,8 +131,8 @@ defmodule RoomTest do
   test "room exits when last active user is gone" do
     room_pid = create_room("r-room7")
     Process.monitor(room_pid)
-    join_room(self(), room_pid)
-    GenServer.call(room_pid, {:leave, "0"})
+    own_id = join_room(self(), room_pid)
+    GenServer.call(room_pid, {:leave, own_id})
     assert_receive {:DOWN, _, :process, _, _}
   end
 
@@ -138,7 +142,8 @@ defmodule RoomTest do
 
   defp join_room(pid, room_pid) do
     GenServer.call(room_pid, {:join, pid, %{standard: "status"}})
-    assert_receive {:to_user, %{event: "joined_room"}}, 1000
+    assert_receive {:to_user, %{event: "joined_room", own_id: own_id}}, 1000
+    own_id
   end
 
   defp wait_for_breaks(n) when n > 0 do
@@ -151,9 +156,9 @@ defmodule RoomTest do
     user_pid =
       spawn_link(fn ->
         pid = self()
-        join_room(pid, room_pid)
+        own_id = join_room(pid, room_pid)
         send(host, :start)
-        fun.()
+        fun.(own_id)
         send(host, :break)
         :timer.sleep(:infinity)
       end)

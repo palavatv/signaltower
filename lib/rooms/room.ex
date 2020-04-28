@@ -43,7 +43,7 @@ defmodule SignalTower.Room do
     GenServer.cast(Stats, {:update_room_peak, self(), map_size(members) + 1})
 
     Process.monitor(pid)
-    peer_id = get_next_id(members)
+    peer_id = UUID.uuid1()
     send_joined_room(pid, peer_id, members)
     send_new_peer(members, peer_id, status)
     SignalTower.PrometheusStats.join()
@@ -62,17 +62,6 @@ defmodule SignalTower.Room do
 
       {:error, state} ->
         {:reply, :error, state}
-    end
-  end
-
-  defp get_next_id(members) do
-    case map_size(members) do
-      0 ->
-        "0"
-
-      _ ->
-        ((members |> Map.keys() |> Stream.map(&String.to_integer/1) |> Enum.max()) + 1)
-        |> Integer.to_string()
     end
   end
 

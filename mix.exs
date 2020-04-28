@@ -25,6 +25,7 @@ defmodule SignalTower.MixProject do
       {:cowboy, "~> 2.6.0"},
       {:poison, "~> 4.0.1"},
       {:prometheus_ex, "~> 3.0"},
+      {:elixir_uuid, "~> 1.2"},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
     ]
   end
