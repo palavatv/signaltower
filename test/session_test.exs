@@ -11,9 +11,9 @@ defmodule SessionTest do
       create_client(fn _, _ ->
         Session.handle_message(
           %{
-            event: "join_room",
-            room_id: "s-room1",
-            status: %{user: "0"}
+            "event" => "join_room",
+            "room_id" => "s-room1",
+            "status" => %{user: "0"}
           },
           nil
         )
@@ -50,9 +50,9 @@ defmodule SessionTest do
       create_client(nil, true, fn _, _ ->
         Session.handle_message(
           %{
-            event: "join_room",
-            room_id: "s-room1",
-            status: %{user: "1"}
+            "event" => "join_room",
+            "room_id" => "s-room1",
+            "status" => %{user: "1"}
           },
           nil
         )
@@ -74,8 +74,8 @@ defmodule SessionTest do
       create_client("s-room13", fn room, _ ->
         Session.handle_message(
           %{
-            event: "leave_room",
-            room_id: "s-room13"
+            "event" => "leave_room",
+            "room_id" => "s-room13"
           },
           room
         )
@@ -96,9 +96,9 @@ defmodule SessionTest do
           peer_id ->
             Session.handle_message(
               %{
-                event: "send_to_peer",
-                peer_id: peer_id,
-                data: %{some: "data"}
+                "event" => "send_to_peer",
+                "peer_id" => peer_id,
+                "data" => %{some: "data"}
               },
               room
             )
@@ -125,8 +125,8 @@ defmodule SessionTest do
       create_client("s-room6", fn room, _ ->
         Session.handle_message(
           %{
-            event: "update_status",
-            status: %{some: "status"}
+            "event" => "update_status",
+            "status" => %{some: "status"}
           },
           room
         )
@@ -152,8 +152,8 @@ defmodule SessionTest do
         room =
           Session.handle_message(
             %{
-              event: "update_status",
-              status: %{new: "status"}
+              "event" => "update_status",
+              "status" => %{new: "status"}
             },
             nil
           )
@@ -163,9 +163,9 @@ defmodule SessionTest do
 
         Session.handle_message(
           %{
-            event: "send_to_peer",
-            peer_id: "some_peer",
-            data: %{some: "data"}
+            "event" => "send_to_peer",
+            "peer_id" => "some_peer",
+            "data" => %{some: "data"}
           },
           room
         )
@@ -205,9 +205,9 @@ defmodule SessionTest do
     room =
       Session.handle_message(
         %{
-          event: "join_room",
-          room_id: room_id,
-          status: %{local: "status"}
+          "event" => "join_room",
+          "room_id" => room_id,
+          "status" => %{local: "status"}
         },
         nil
       )
