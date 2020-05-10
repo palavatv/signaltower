@@ -2,8 +2,6 @@ defmodule RoomTest do
   use ExUnit.Case, async: true
   import TestHelper
 
-  alias SignalTower.Room.Supervisor
-
   test "r-room exists" do
     create_room("r-room")
     Process.registered() |> Enum.member?(:"room_r-room") |> assert
@@ -138,7 +136,7 @@ defmodule RoomTest do
   end
 
   defp create_room(room_id) do
-    Supervisor.create_room(room_id)
+    SignalTower.Room.create(room_id)
   end
 
   defp join_room(pid, room_pid) do

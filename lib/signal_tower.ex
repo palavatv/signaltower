@@ -34,9 +34,12 @@ defmodule SignalTower do
 
   defp start_supervisor({port, dispatch}) do
     children = [
-      supervisor(Room.Supervisor, []),
-      worker(Stats, [log_file()]),
-      worker(:cowboy, [:http, [port: port], %{env: %{dispatch: dispatch}}], function: :start_clear)
+      {DynamicSupervisor, name: Room.Supervisor, strategy: :one_for_one},
+      {Stats, [log_file()]},
+      %{
+        id: :cowboy,
+        start: {:cowboy, :start_clear, [:http, [port: port], %{env: %{dispatch: dispatch}}]}
+      }
     ]
 
     Supervisor.start_link(children, strategy: :one_for_one)

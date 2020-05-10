@@ -1,9 +1,10 @@
 defmodule SignalTower.Room do
-  use GenServer
+  use GenServer, restart: :transient
 
+  alias SignalTower.PrometheusStats
+  alias SignalTower.Room
   alias SignalTower.Room.{Member, Membership, Supervisor}
   alias SignalTower.Stats
-  alias SignalTower.PrometheusStats
 
   ## API ##
 
@@ -12,8 +13,15 @@ defmodule SignalTower.Room do
     GenServer.start_link(__MODULE__, room_id, name: name)
   end
 
+  def create(room_id) do
+    case DynamicSupervisor.start_child(Supervisor, {Room, [room_id]}) do
+      {:ok, pid} -> pid
+      {:error, {:already_started, pid}} -> pid
+    end
+  end
+
   def join_and_monitor(room_id, status) do
-    room_pid = Supervisor.create_room(room_id)
+    room_pid = create(room_id)
     Process.monitor(room_pid)
     own_id = GenServer.call(room_pid, {:join, self(), status})
     %Membership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
