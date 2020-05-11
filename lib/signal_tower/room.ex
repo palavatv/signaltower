@@ -31,18 +31,16 @@ defmodule SignalTower.Room do
 
   def init(room_id) do
     GenServer.cast(Stats, {:room_created, self()})
-    SignalTower.PrometheusStats.room_created()
     {:ok, {room_id, %{}}}
   end
 
   def handle_call({:join, pid, status}, _, {room_id, members}) do
-    GenServer.cast(Stats, {:update_room_peak, self(), map_size(members) + 1})
+    GenServer.cast(Stats, {:peer_joined, self(), map_size(members) + 1})
 
     Process.monitor(pid)
     peer_id = UUID.uuid1()
     send_joined_room(pid, peer_id, members)
     send_new_peer(members, peer_id, status)
-    PrometheusStats.join()
 
     new_member = %Member{peer_id: peer_id, pid: pid, status: status}
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
@@ -103,14 +101,14 @@ defmodule SignalTower.Room do
 
   defp leave(peer_id, state = {room_id, members}) do
     if members[peer_id] do
-      PrometheusStats.leave()
+      GenServer.cast(Stats, {:peer_left, self()})
       next_members = Map.delete(members, peer_id)
 
       if map_size(next_members) > 0 do
         send_peer_left(next_members, peer_id)
         {:ok, {room_id, next_members}}
       else
-        SignalTower.PrometheusStats.room_closed()
+        GenServer.cast(Stats, {:room_closed, self()})
         {:stop, {room_id, next_members}}
       end
     else
