@@ -8,6 +8,19 @@ defmodule PrometheusStatsTest do
     assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_closed_total/))
     assert(String.match?(PrometheusStats.to_string(), ~r/palava_joined_room_total/))
     assert(String.match?(PrometheusStats.to_string(), ~r/palava_leave_room_total/))
+
+    assert(
+      String.match?(PrometheusStats.to_string(), ~r/palava_duration_room_milliseconds_bucket/)
+    )
+
+    assert(
+      String.match?(PrometheusStats.to_string(), ~r/palava_duration_room_milliseconds_count/)
+    )
+
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_duration_room_milliseconds_sum/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_peak_users_total_bucket/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_peak_users_total_count/))
+    assert(String.match?(PrometheusStats.to_string(), ~r/palava_room_peak_users_total_sum/))
   end
 
   test "should reset metrics" do
@@ -17,6 +30,10 @@ defmodule PrometheusStatsTest do
     assert("0" == metric_map["palava_room_closed_total"])
     assert("0" == metric_map["palava_joined_room_total"])
     assert("0" == metric_map["palava_leave_room_total"])
+    assert("0" == metric_map["palava_duration_room_milliseconds_count"])
+    assert("0.0" == metric_map["palava_duration_room_milliseconds_sum"])
+    assert("0" == metric_map["palava_room_peak_users_total_count"])
+    assert("0" == metric_map["palava_room_peak_users_total_sum"])
   end
 
   test "should increment on room created" do
@@ -28,9 +45,23 @@ defmodule PrometheusStatsTest do
 
   test "should increment on room closed" do
     PrometheusStats.reset()
-    PrometheusStats.room_closed()
+    PrometheusStats.room_closed(0, 0)
     metric_map = to_map(PrometheusStats.to_string())
     assert("1" == metric_map["palava_room_closed_total"])
+  end
+
+  test "should observe session duratoin on room closed" do
+    PrometheusStats.reset()
+    PrometheusStats.room_closed(1, 0)
+    metric_map = to_map(PrometheusStats.to_string())
+    assert("1.0" == metric_map["palava_duration_room_milliseconds_sum"])
+  end
+
+  test "should observe peak user count on room closed" do
+    PrometheusStats.reset()
+    PrometheusStats.room_closed(0, 5)
+    metric_map = to_map(PrometheusStats.to_string())
+    assert("5" == metric_map["palava_room_peak_users_total_sum"])
   end
 
   test "should increment on join" do
