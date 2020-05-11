@@ -15,7 +15,6 @@ defmodule SignalTower.Stats do
   end
 
   def handle_cast({:room_created, pid}, {file, room_sessions}) do
-    Process.monitor(pid)
     time = DateTime.utc_now()
     new_session = %RoomSession{pid: pid, create_time: time, peak_time: time}
     PrometheusStats.room_created()
@@ -37,7 +36,7 @@ defmodule SignalTower.Stats do
   end
 
   def handle_cast({:peer_joined, pid, count}, {file, room_sessions}) do
-    SignalTower.PrometheusStats.join()
+    PrometheusStats.join()
 
     if room_sessions[pid] && room_sessions[pid].peak_user_count < count do
       updated_room_sessions =
@@ -53,10 +52,6 @@ defmodule SignalTower.Stats do
 
   def handle_cast({:peer_left, _pid}, state) do
     PrometheusStats.leave()
-    {:noreply, state}
-  end
-
-  def handle_info({:DOWN, _ref, _, _pid, _}, state = {_file, _room_sessions}) do
     {:noreply, state}
   end
 end

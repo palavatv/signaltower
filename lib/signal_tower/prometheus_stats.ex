@@ -7,6 +7,7 @@ defmodule SignalTower.PrometheusStats do
   @histogram [
     name: :palava_duration_room_milliseconds,
     labels: [],
+    # Creates 20 buckets {1000, 2000, 4000, 8000, 16000, ...}
     buckets: Prometheus.Buckets.new({:exponential, 1000, 2, 20}),
     help: "Room duration in milliseconds"
   ]
