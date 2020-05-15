@@ -28,6 +28,12 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
+  def websocket_handle({:ping, _message}, state) do
+    # ignore, cowboy sends pong message automatically
+    {:ok, state}
+  end
+
+  @impl :cowboy_websocket
   def websocket_handle(msg, state) do
     Logger.warn("Unknown handle message: #{inspect(msg)}")
     {:ok, state}
