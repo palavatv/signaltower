@@ -70,13 +70,15 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
-  def terminate(reason, _partialreq, _room) do
+  def terminate(reason, req, _room) do
     case reason do
       {:error, error} ->
-        Logger.warn("websocket error: #{error}")
+        Logger.warn("websocket error: #{error}, request: #{inspect(req)}")
 
       {:crash, class, error} ->
-        Logger.warn("websocket crash. class: #{class}, reason: #{error}")
+        Logger.warn(
+          "websocket crash. class: #{class}, reason: #{error}, request: #{inspect(req)}"
+        )
 
       _ ->
         :ok
