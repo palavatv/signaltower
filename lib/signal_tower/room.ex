@@ -1,7 +1,6 @@
 defmodule SignalTower.Room do
   use GenServer, restart: :transient
 
-  alias SignalTower.PrometheusStats
   alias SignalTower.Room
   alias SignalTower.Room.{Member, Membership, Supervisor}
   alias SignalTower.Stats
