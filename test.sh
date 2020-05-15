@@ -1,2 +1,2 @@
 #!/bin/sh
-PALAVA_RTC_ADDRESS="4235" mix test
+SIGNALTOWER_PORT="4235" mix test

@@ -34,7 +34,7 @@ mix release production
 
 By default, the websocket port 4233 is used, you can change it via:
 ```
-export PALAVA_RTC_ADDRESS=1234
+export SIGNALTOWER_PORT=1234
 ```
 
 [palava protocol]: https://github.com/palavatv/palava-client/wiki/Protocol
