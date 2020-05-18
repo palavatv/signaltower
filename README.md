@@ -1,13 +1,12 @@
-signal tower
-===========
+# palava | signal tower
 
 [palava.tv](https://palava.tv) is a cost-free, simple to use, secure, and open source platform for video calls, built on top of the [WebRTC](https://webrtc.org/) technology.
 
 This repository contains the WebRTC signaling backend of palava.tv. There is an overview of all parts of palava.tv at [palavatv/palava](https://github.com/palavatv/palava).
 
-## Description
+The signal tower is a signaling server for WebRTC applications written in Elixir. It implements the [palava signaling protocol][palava protocol] over websockets to be used together with the [palava client][palava client].
 
-Signal tower is a signaling server for WebRTC applications written in Elixir. It implements the [palava signaling protocol][palava protocol] over websockets to be used together with the [palava client][palava client].
+## Setup
 
 **Install:**
 ```
