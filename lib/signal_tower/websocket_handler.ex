@@ -6,12 +6,13 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def init(req, _state) do
-    {:cowboy_websocket, req, nil, %{idle_timeout: 24 * 60 * 60 * 1000}}
+    {:cowboy_websocket, req, nil, %{idle_timeout: :timer.seconds(40)}}
   end
 
   @impl :cowboy_websocket
   def websocket_init(state) do
     Session.init()
+    :timer.send_interval(:timer.seconds(5), :send_ping)
     {:ok, state}
   end
 
@@ -34,6 +35,12 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
+  def websocket_handle({:pong, _message}, state) do
+    # ignore, these should come in every 15s if the websocket connection is alive
+    {:ok, state}
+  end
+
+  @impl :cowboy_websocket
   def websocket_handle(msg, state) do
     Logger.warn("Unknown handle message: #{inspect(msg)}")
     {:ok, state}
@@ -42,6 +49,11 @@ defmodule SignalTower.WebsocketHandler do
   @impl :cowboy_websocket
   def websocket_info({:DOWN, _, _, pid, status}, room) do
     {:ok, Session.handle_exit_message(pid, room, status)}
+  end
+
+  @impl :cowboy_websocket
+  def websocket_info(:send_ping, status) do
+    {:reply, {:ping, "server ping"}, status}
   end
 
   @impl :cowboy_websocket
