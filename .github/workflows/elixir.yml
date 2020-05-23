@@ -24,6 +24,8 @@ jobs:
       run: mix deps.get
     - name: Compile Dependencies
       run: mix deps.compile
+    - name: Compile and check for warnings
+      run: mix compile --warnings-as-errors
     - name: Run Tests
       run: mix test
     - name: Run dialyzer static code analysis
