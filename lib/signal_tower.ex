@@ -2,15 +2,15 @@ defmodule SignalTower do
   use Application
   require Logger
 
-  import Supervisor.Spec, warn: false
-
   alias SignalTower.{WebsocketHandler, PrometheusHTTPHandler, Room, Stats}
 
+  @impl Application
   def start(_type, _args) do
     start_cowboy()
     |> start_supervisor()
   end
 
+  @impl Application
   def stop(_state) do
     :ok
   end

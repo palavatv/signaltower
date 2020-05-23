@@ -28,11 +28,13 @@ defmodule SignalTower.Room do
 
   ## Callbacks ##
 
+  @impl GenServer
   def init(room_id) do
     GenServer.cast(Stats, {:room_created, self()})
     {:ok, {room_id, %{}}}
   end
 
+  @impl GenServer
   def handle_call({:join, pid, status}, _, {room_id, members}) do
     GenServer.cast(Stats, {:peer_joined, self(), map_size(members) + 1})
 
@@ -45,6 +47,7 @@ defmodule SignalTower.Room do
     {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
   end
 
+  @impl GenServer
   def handle_call({:leave, peer_id}, _, state) do
     case leave(peer_id, state) do
       {:ok, state} ->
@@ -58,6 +61,7 @@ defmodule SignalTower.Room do
     end
   end
 
+  @impl GenServer
   def handle_cast({:send_to_peer, peer_id, msg, sender_id}, state = {_, members}) do
     if members[sender_id] && members[peer_id] do
       send(members[peer_id].pid, {:to_user, Map.put(msg, :sender_id, sender_id)})
@@ -66,6 +70,7 @@ defmodule SignalTower.Room do
     {:noreply, state}
   end
 
+  @impl GenServer
   def handle_cast({:update_status, sender_id, status}, state = {_, members}) do
     if members[sender_id] do
       update_status = %{
@@ -82,6 +87,7 @@ defmodule SignalTower.Room do
   end
 
   # invoked when a user session exits
+  @impl GenServer
   def handle_info({:DOWN, _ref, _, pid, _}, state = {_, members}) do
     members
     |> Enum.find(fn {_, member} -> pid == member.pid end)
