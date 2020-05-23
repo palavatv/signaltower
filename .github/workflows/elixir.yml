@@ -26,3 +26,5 @@ jobs:
       run: mix deps.compile
     - name: Run Tests
       run: mix test
+    - name: Run dialyzer static code analysis
+      run: mix dialyzer
