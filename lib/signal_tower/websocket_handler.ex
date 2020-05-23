@@ -35,6 +35,12 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
+  def websocket_handle(:pong, state) do
+    # ignore, these should come in every 15s if the websocket connection is alive
+    {:ok, state}
+  end
+
+  @impl :cowboy_websocket
   def websocket_handle({:pong, _message}, state) do
     # ignore, these should come in every 15s if the websocket connection is alive
     {:ok, state}
