@@ -1,5 +1,6 @@
 defmodule SignalTower.PrometheusStats do
   use Prometheus.Metric
+
   @counter [name: :palava_room_created_total, labels: [], help: "Number of rooms created"]
   @counter [name: :palava_room_closed_total, labels: [], help: "Number of rooms closed"]
   @counter [name: :palava_joined_room_total, labels: [], help: "Number of peers joined a room"]

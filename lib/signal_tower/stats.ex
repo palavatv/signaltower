@@ -4,15 +4,19 @@ defmodule SignalTower.Stats do
   use GenServer
 
   ## API ##
+
   def start_link(_) do
     GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
   end
 
   ## Callbacks ##
+
+  @impl GenServer
   def init(_) do
     {:ok, %{}}
   end
 
+  @impl GenServer
   def handle_cast({:room_created, pid}, room_sessions) do
     time = DateTime.utc_now()
     new_session = %RoomSession{pid: pid, create_time: time, peak_time: time}
@@ -20,6 +24,7 @@ defmodule SignalTower.Stats do
     {:noreply, Map.put(room_sessions, pid, new_session)}
   end
 
+  @impl GenServer
   def handle_cast({:room_closed, pid}, room_sessions) do
     case Map.pop(room_sessions, pid) do
       {nil, _} ->
@@ -34,6 +39,7 @@ defmodule SignalTower.Stats do
     end
   end
 
+  @impl GenServer
   def handle_cast({:peer_joined, pid, count}, room_sessions) do
     PrometheusStats.join()
 
@@ -49,6 +55,7 @@ defmodule SignalTower.Stats do
     end
   end
 
+  @impl GenServer
   def handle_cast({:peer_left, _pid}, state) do
     PrometheusStats.leave()
     {:noreply, state}
