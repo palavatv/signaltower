@@ -1,4 +1,6 @@
 # palava | signal tower
+![Elixir CI](https://github.com/palavatv/signaltower/workflows/Elixir%20CI/badge.svg)
+---
 
 [palava.tv](https://palava.tv) is a cost-free, simple to use, secure, and open source platform for video calls, built on top of the [WebRTC](https://webrtc.org/) technology.
 
