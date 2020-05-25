@@ -16,6 +16,10 @@ defmodule SignalTower do
   end
 
   defp start_cowboy() do
+    ip = case System.get_env("SIGNALTOWER_LOCALHOST") do
+      nil -> {0,0,0,0}
+      _   -> {127,0,0,1}
+    end
     {port, _} = Integer.parse(System.get_env("SIGNALTOWER_PORT") || "4233")
 
     dispatch =
@@ -28,16 +32,16 @@ defmodule SignalTower do
         {:_, [{"/", WebsocketHandler, []}]}
       ])
 
-    {port, dispatch}
+    {ip, port, dispatch}
   end
 
-  defp start_supervisor({port, dispatch}) do
+  defp start_supervisor({ip, port, dispatch}) do
     children = [
       {DynamicSupervisor, name: Room.Supervisor, strategy: :one_for_one},
       {Stats, []},
       %{
         id: :cowboy,
-        start: {:cowboy, :start_clear, [:http, [port: port], %{env: %{dispatch: dispatch}}]}
+        start: {:cowboy, :start_clear, [:http, [ip: ip, port: port], %{env: %{dispatch: dispatch}}]}
       }
     ]
 
