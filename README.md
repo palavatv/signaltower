@@ -42,6 +42,11 @@ By default, the websocket port 4233 is used, you can change it via:
 export SIGNALTOWER_PORT=1234
 ```
 
+By default, the websocket is bound to all interfaces (0.0.0.0), you can also bind it just localhost (127.0.0.1) via:
+```
+export SIGNALTOWER_LOCALHOST
+```
+
 [palava protocol]: https://github.com/palavatv/palava-client/wiki/Protocol
 [palava client]: https://github.com/palavatv/palava-client/
 [palava project]: https://github.com/palavatv/palava
