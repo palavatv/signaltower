@@ -48,6 +48,18 @@ defmodule SignalTower.Session do
     room
   end
 
+  defp incoming_message(%{"event" => "ping"}, room) do
+    send(
+      self(),
+      {:to_user,
+       %{
+         event: "pong"
+       }}
+    )
+
+    room
+  end
+
   # invoked when a room exits
   def handle_exit_message(pid, room, status) do
     if room && pid == room.pid && status != :normal do
