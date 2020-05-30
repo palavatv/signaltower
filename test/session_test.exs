@@ -177,6 +177,17 @@ defmodule SessionTest do
     wait_for_breaks(1)
   end
 
+  test "respond to client ping" do
+    Session.handle_message(
+      %{
+        "event" => "ping"
+      },
+      nil
+    )
+
+    assert_receive {:to_user, %{event: "pong"}}
+  end
+
   defp create_client(room_id \\ nil, leave_after_finish \\ false, fun) do
     host = self()
 
