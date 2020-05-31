@@ -6,7 +6,7 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def init(req, _state) do
-    {:cowboy_websocket, req, nil, %{idle_timeout: :timer.seconds(40)}}
+    {:cowboy_websocket, req, nil, %{idle_timeout: :timer.seconds(30)}}
   end
 
   @impl :cowboy_websocket
