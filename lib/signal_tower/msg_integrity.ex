@@ -40,6 +40,10 @@ defmodule SignalTower.MsgIntegrity do
     is_map(msg["status"])
   end
 
+  defp complete?("ping", _msg) do
+    true
+  end
+
   defp check_room_event(room, event) do
     if room || !Enum.member?(@room_messages, event) do
       if valid_room_event?(room, event) do
