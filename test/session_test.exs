@@ -188,6 +188,17 @@ defmodule SessionTest do
     assert_receive {:to_user, %{event: "pong"}}
   end
 
+  test "return error on unknown message type" do
+    Session.handle_message(
+      %{
+        "event" => "unknown"
+      },
+      nil
+    )
+
+    assert_receive {:to_user, %{event: "error"}}
+  end
+
   defp create_client(room_id \\ nil, leave_after_finish \\ false, fun) do
     host = self()
 

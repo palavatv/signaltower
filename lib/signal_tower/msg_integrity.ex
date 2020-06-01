@@ -17,10 +17,9 @@ defmodule SignalTower.MsgIntegrity do
   end
 
   defp check_completeness(msg = %{"event" => event}) do
-    case complete?(event, msg) do
-      true -> :ok
-      false -> {:error, "unknown event name or missing/incorrect field(s)"}
-    end
+    if complete?(event, msg),
+      do: :ok,
+      else: {:error, "unknown event name or missing/incorrect field(s)"}
   end
 
   defp complete?("join_room", msg) do
@@ -28,21 +27,11 @@ defmodule SignalTower.MsgIntegrity do
       (!msg["users_to_call"] || is_list(msg["users_to_call"]))
   end
 
-  defp complete?("leave_room", msg) do
-    is_binary(msg["room_id"])
-  end
-
-  defp complete?("send_to_peer", msg) do
-    is_binary(msg["peer_id"]) && is_map(msg["data"])
-  end
-
-  defp complete?("update_status", msg) do
-    is_map(msg["status"])
-  end
-
-  defp complete?("ping", _msg) do
-    true
-  end
+  defp complete?("leave_room", msg), do: is_binary(msg["room_id"])
+  defp complete?("send_to_peer", msg), do: is_binary(msg["peer_id"]) && is_map(msg["data"])
+  defp complete?("update_status", msg), do: is_map(msg["status"])
+  defp complete?("ping", _msg), do: true
+  defp complete?(_, _), do: false
 
   defp check_room_event(room, event) do
     if room || !Enum.member?(@room_messages, event) do
