@@ -16,10 +16,13 @@ defmodule SignalTower do
   end
 
   defp start_cowboy() do
-    ip = case System.get_env("SIGNALTOWER_LOCALHOST") do
-      nil -> {0,0,0,0}
-      _   -> {127,0,0,1}
-    end
+    ip =
+      if System.get_env("SIGNALTOWER_LOCALHOST") do
+        {127, 0, 0, 1}
+      else
+        {0, 0, 0, 0}
+      end
+
     {port, _} = Integer.parse(System.get_env("SIGNALTOWER_PORT") || "4233")
 
     dispatch =
@@ -41,7 +44,8 @@ defmodule SignalTower do
       {Stats, []},
       %{
         id: :cowboy,
-        start: {:cowboy, :start_clear, [:http, [ip: ip, port: port], %{env: %{dispatch: dispatch}}]}
+        start:
+          {:cowboy, :start_clear, [:http, [ip: ip, port: port], %{env: %{dispatch: dispatch}}]}
       }
     ]
 
