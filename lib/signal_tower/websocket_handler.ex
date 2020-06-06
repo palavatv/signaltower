@@ -88,7 +88,7 @@ defmodule SignalTower.WebsocketHandler do
           "Sending message: Could not transform internal object to JSON: #{inspect(msg)}"
         )
 
-        Poison.encode!(%{event: "error", message: "internal_server_error"})
+        Poison.encode!(%{event: "error", description: "internal_server_error", received_msg: %{}})
     end
   end
 
