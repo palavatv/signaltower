@@ -68,6 +68,11 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
+  def websocket_info(:shutdown, state) do
+    {:reply, {:text, internal_to_json(%{event: "shutdown"})}, state}
+  end
+
+  @impl :cowboy_websocket
   def websocket_info(msg, state) do
     Logger.warn("Unknown info message: #{inspect(msg)}")
     {:ok, state}
