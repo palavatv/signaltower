@@ -29,7 +29,7 @@ defmodule SignalTower.MsgIntegrity do
 
   defp complete?("send_to_peer", msg), do: is_binary(msg["peer_id"]) && is_map(msg["data"])
   defp complete?("update_status", msg), do: is_map(msg["status"])
-  defp complete?("leave_room", msg), do: true
+  defp complete?("leave_room", _msg), do: true
   defp complete?("ping", _msg), do: true
   defp complete?(_, _), do: false
 
