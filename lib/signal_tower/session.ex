@@ -29,8 +29,12 @@ defmodule SignalTower.Session do
   defp incoming_message(msg = %{"event" => "leave_room"}, room) do
     if room do
       case GenServer.call(room.pid, {:leave, room.own_id}) do
-        :ok -> nil
-        :error -> room
+        :ok ->
+          nil
+
+        :error ->
+          send_error("You are not currently in a room, so you can not leave it", msg)
+          room
       end
     else
       send_error("You are not currently in a room, so you can not leave it", msg)
