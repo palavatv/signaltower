@@ -9,7 +9,7 @@ defmodule SignalTower.Room do
 
   def start_link(room_id) do
     name = "room_#{room_id}" |> String.to_atom()
-    GenServer.start_link(__MODULE__, room_id, name: name)
+    GenServer.start_link(__MODULE__, :ok, name: name)
   end
 
   def create(room_id) do
@@ -19,32 +19,36 @@ defmodule SignalTower.Room do
     end
   end
 
-  def join_and_monitor(room_id, status) do
+  def join_and_monitor(room_id, status, last_turn_timestamp) do
     room_pid = create(room_id)
     Process.monitor(room_pid)
-    own_id = GenServer.call(room_pid, {:join, self(), status})
-    %Membership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
+
+    {own_id, new_turn_timestamp} =
+      GenServer.call(room_pid, {:join, self(), status, last_turn_timestamp})
+
+    membership = %Membership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
+    {membership, new_turn_timestamp}
   end
 
   ## Callbacks ##
 
   @impl GenServer
-  def init(room_id) do
+  def init(_) do
     GenServer.cast(Stats, {:room_created, self()})
-    {:ok, {room_id, %{}}}
+    {:ok, %{}}
   end
 
   @impl GenServer
-  def handle_call({:join, pid, status}, _, {room_id, members}) do
+  def handle_call({:join, pid, status, last_turn_timestamp}, _, members) do
     GenServer.cast(Stats, {:peer_joined, self(), map_size(members) + 1})
 
     Process.monitor(pid)
     peer_id = UUID.uuid1()
-    send_joined_room(pid, peer_id, members)
+    new_turn_timestamp = send_joined_room(pid, peer_id, members, last_turn_timestamp)
     send_new_peer(members, peer_id, status)
 
     new_member = %Member{peer_id: peer_id, pid: pid, status: status}
-    {:reply, peer_id, {room_id, Map.put(members, peer_id, new_member)}}
+    {:reply, {peer_id, new_turn_timestamp}, Map.put(members, peer_id, new_member)}
   end
 
   @impl GenServer
@@ -62,16 +66,16 @@ defmodule SignalTower.Room do
   end
 
   @impl GenServer
-  def handle_cast({:send_to_peer, peer_id, msg, sender_id}, state = {_, members}) do
+  def handle_cast({:send_to_peer, peer_id, msg, sender_id}, members) do
     if members[sender_id] && members[peer_id] do
       send(members[peer_id].pid, {:to_user, Map.put(msg, :sender_id, sender_id)})
     end
 
-    {:noreply, state}
+    {:noreply, members}
   end
 
   @impl GenServer
-  def handle_cast({:update_status, sender_id, status}, state = {_, members}) do
+  def handle_cast({:update_status, sender_id, status}, members) do
     if members[sender_id] do
       update_status = %{
         event: "peer_updated_status",
@@ -83,41 +87,41 @@ defmodule SignalTower.Room do
       |> send_to_all(update_status)
     end
 
-    {:noreply, state}
+    {:noreply, members}
   end
 
   # invoked when a user session exits
   @impl GenServer
-  def handle_info({:DOWN, _ref, _, pid, _}, state = {_, members}) do
+  def handle_info({:DOWN, _ref, _, pid, _}, members) do
     members
     |> Enum.find(fn {_, member} -> pid == member.pid end)
     |> case do
       {id, _} ->
-        case leave(id, state) do
+        case leave(id, members) do
           {:ok, state} -> {:noreply, state}
           {:error, state} -> {:noreply, state}
           {:stop, state} -> {:stop, :normal, state}
         end
 
       _ ->
-        {:noreply, state}
+        {:noreply, members}
     end
   end
 
-  defp leave(peer_id, state = {room_id, members}) do
+  defp leave(peer_id, members) do
     if members[peer_id] do
       GenServer.cast(Stats, {:peer_left, self()})
       next_members = Map.delete(members, peer_id)
 
       if map_size(next_members) > 0 do
         send_peer_left(next_members, peer_id)
-        {:ok, {room_id, next_members}}
+        {:ok, next_members}
       else
         GenServer.cast(Stats, {:room_closed, self()})
-        {:stop, {room_id, next_members}}
+        {:stop, next_members}
       end
     else
-      {:error, state}
+      {:error, members}
     end
   end
 
@@ -128,14 +132,35 @@ defmodule SignalTower.Room do
     end)
   end
 
-  defp send_joined_room(pid, peer_id, members) do
-    response_for_joined_peer = %{
-      event: "joined_room",
-      own_id: peer_id,
-      peers: members |> Map.values()
-    }
+  defp send_joined_room(pid, own_id, members, last_turn_timestamp) do
+    now = System.os_time(:second)
 
-    send(pid, {:to_user, response_for_joined_peer})
+    {turn_response, next_turn_timestamp} =
+      if System.get_env("SIGNALTOWER_TURN_SECRET") && last_turn_timestamp < now do
+        next_timestamp = now + 3 * 60 * 60
+        user = to_string(next_timestamp) <> ":" <> own_id
+        secret = System.get_env("SIGNALTOWER_TURN_SECRET")
+
+        response = %{
+          turn_user: user,
+          turn_password:
+            :crypto.mac(:hmac, :sha, to_charlist(secret), to_charlist(user)) |> Base.encode64()
+        }
+
+        {response, next_timestamp}
+      else
+        {%{}, last_turn_timestamp}
+      end
+
+    joined_response =
+      Map.merge(turn_response, %{
+        event: "joined_room",
+        own_id: own_id,
+        peers: members |> Map.values()
+      })
+
+    send(pid, {:to_user, joined_response})
+    next_turn_timestamp
   end
 
   defp send_new_peer(members, peer_id, status) do

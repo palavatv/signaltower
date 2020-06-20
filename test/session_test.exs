@@ -15,7 +15,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "0"}
           },
-          nil
+          {nil, 0}
         )
 
         assert_receive {:to_user,
@@ -54,7 +54,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "1"}
           },
-          nil
+          {nil, 0}
         )
 
         assert_receive {:to_user,
@@ -77,7 +77,7 @@ defmodule SessionTest do
             "event" => "leave_room",
             "room_id" => "s-room13"
           },
-          room
+          {room, 0}
         )
       end)
 
@@ -100,7 +100,7 @@ defmodule SessionTest do
                 "peer_id" => peer_id,
                 "data" => %{some: "data"}
               },
-              room
+              {room, 0}
             )
         end
       end)
@@ -128,7 +128,7 @@ defmodule SessionTest do
             "event" => "update_status",
             "status" => %{some: "status"}
           },
-          room
+          {room, 0}
         )
       end)
 
@@ -155,7 +155,7 @@ defmodule SessionTest do
               "event" => "update_status",
               "status" => %{new: "status"}
             },
-            nil
+            {nil, 0}
           )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -167,7 +167,7 @@ defmodule SessionTest do
             "peer_id" => "some_peer",
             "data" => %{some: "data"}
           },
-          room
+          {room, 0}
         )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -182,7 +182,7 @@ defmodule SessionTest do
       %{
         "event" => "ping"
       },
-      nil
+      {nil, 0}
     )
 
     assert_receive {:to_user, %{event: "pong"}}
@@ -193,7 +193,7 @@ defmodule SessionTest do
       %{
         "event" => "unknown"
       },
-      nil
+      {nil, 0}
     )
 
     assert_receive {:to_user, %{event: "error"}}
@@ -224,14 +224,14 @@ defmodule SessionTest do
   end
 
   defp join_room(room_id, host) do
-    room =
+    {room, _} =
       Session.handle_message(
         %{
           "event" => "join_room",
           "room_id" => room_id,
           "status" => %{local: "status"}
         },
-        nil
+        {nil, 0}
       )
 
     if host, do: send(host, :start)
