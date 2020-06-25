@@ -6,14 +6,21 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def init(req, _state) do
-    {:cowboy_websocket, req, {nil, 0}, %{idle_timeout: :timer.seconds(30)}}
+    initial_state = %{
+      # room membership
+      room: nil,
+      # initialize turn timeout with 0, it will be properly initialized on first room join
+      turn_timeout: 0
+    }
+
+    {:cowboy_websocket, req, initial_state, %{idle_timeout: :timer.seconds(30)}}
   end
 
   @impl :cowboy_websocket
-  def websocket_init({room, last_turn_timestamp}) do
+  def websocket_init(initial_state) do
     Session.init()
     :timer.send_interval(:timer.seconds(5), :send_ping)
-    {:ok, {room, last_turn_timestamp}}
+    {:ok, initial_state}
   end
 
   @impl :cowboy_websocket
@@ -53,8 +60,8 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
-  def websocket_info({:DOWN, _, _, pid, status}, {room, ltt}) do
-    {:ok, Session.handle_exit_message(pid, room, status, ltt)}
+  def websocket_info({:DOWN, _, _, pid, status}, state) do
+    {:ok, Session.handle_exit_message(pid, status, state)}
   end
 
   @impl :cowboy_websocket

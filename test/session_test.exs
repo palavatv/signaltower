@@ -4,6 +4,8 @@ defmodule SessionTest do
 
   alias SignalTower.Session
 
+  @initial_state %{room: nil, turn_timeout: 0}
+
   test "join and leave with registered users" do
     host_pid = self()
 
@@ -15,7 +17,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "0"}
           },
-          {nil, 0}
+          @initial_state
         )
 
         assert_receive {:to_user,
@@ -54,7 +56,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "1"}
           },
-          {nil, 0}
+          @initial_state
         )
 
         assert_receive {:to_user,
@@ -77,7 +79,7 @@ defmodule SessionTest do
             "event" => "leave_room",
             "room_id" => "s-room13"
           },
-          {room, 0}
+          %{room: room, turn_timeout: 0}
         )
       end)
 
@@ -100,7 +102,7 @@ defmodule SessionTest do
                 "peer_id" => peer_id,
                 "data" => %{some: "data"}
               },
-              {room, 0}
+              %{room: room, turn_timeout: 0}
             )
         end
       end)
@@ -128,7 +130,7 @@ defmodule SessionTest do
             "event" => "update_status",
             "status" => %{some: "status"}
           },
-          {room, 0}
+          %{room: room, turn_timeout: 0}
         )
       end)
 
@@ -149,13 +151,13 @@ defmodule SessionTest do
   test "not possible to use certain events when not in a room" do
     _client1 =
       create_client(fn _, _ ->
-        room =
+        %{room: room} =
           Session.handle_message(
             %{
               "event" => "update_status",
               "status" => %{new: "status"}
             },
-            {nil, 0}
+            @initial_state
           )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -167,7 +169,7 @@ defmodule SessionTest do
             "peer_id" => "some_peer",
             "data" => %{some: "data"}
           },
-          {room, 0}
+          %{room: room, turn_timeout: 0}
         )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -182,7 +184,7 @@ defmodule SessionTest do
       %{
         "event" => "ping"
       },
-      {nil, 0}
+      @initial_state()
     )
 
     assert_receive {:to_user, %{event: "pong"}}
@@ -193,7 +195,7 @@ defmodule SessionTest do
       %{
         "event" => "unknown"
       },
-      {nil, 0}
+      @initial_state
     )
 
     assert_receive {:to_user, %{event: "error"}}
@@ -224,14 +226,14 @@ defmodule SessionTest do
   end
 
   defp join_room(room_id, host) do
-    {room, _} =
+    %{room: room} =
       Session.handle_message(
         %{
           "event" => "join_room",
           "room_id" => room_id,
           "status" => %{local: "status"}
         },
-        {nil, 0}
+        @initial_state
       )
 
     if host, do: send(host, :start)

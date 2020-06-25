@@ -11,45 +11,45 @@ defmodule SignalTower.Session do
     |> (&Process.register(self(), &1)).()
   end
 
-  def handle_message(msg, {room, ltt}) do
-    case MsgIntegrity.check(msg, room) do
+  def handle_message(msg, state) do
+    case MsgIntegrity.check(msg, state.room) do
       {:ok, msg} ->
-        incoming_message(msg, {room, ltt})
+        incoming_message(msg, state)
 
       {:error, error} ->
         send_error(error, msg)
-        room
+        state
     end
   end
 
-  defp incoming_message(msg = %{"event" => "join_room"}, {_, last_turn_timestamp}) do
-    Room.join_and_monitor(msg["room_id"], msg["status"], last_turn_timestamp)
+  defp incoming_message(msg = %{"event" => "join_room"}, state) do
+    Room.join_and_monitor(msg["room_id"], msg["status"], state.turn_timeout)
   end
 
-  defp incoming_message(msg = %{"event" => "leave_room"}, {room, ltt}) do
+  defp incoming_message(msg = %{"event" => "leave_room"}, state = %{room: room}) do
     if room do
       case GenServer.call(room.pid, {:leave, room.own_id}) do
         :ok ->
-          {nil, ltt}
+          %{state | room: nil}
 
         :error ->
           send_error("You are not currently in a room, so you can not leave it", msg)
-          {room, ltt}
+          state
       end
     else
       send_error("You are not currently in a room, so you can not leave it", msg)
-      {room, ltt}
+      state
     end
   end
 
-  defp incoming_message(msg = %{"event" => "send_to_peer"}, {room, ltt}) do
+  defp incoming_message(msg = %{"event" => "send_to_peer"}, state = %{room: room}) do
     GenServer.cast(room.pid, {:send_to_peer, msg["peer_id"], msg["data"], room.own_id})
-    {room, ltt}
+    state
   end
 
-  defp incoming_message(msg = %{"event" => "update_status"}, {room, ltt}) do
+  defp incoming_message(msg = %{"event" => "update_status"}, state = %{room: room}) do
     GenServer.cast(room.pid, {:update_status, room.own_id, msg["status"]})
-    {room, ltt}
+    state
   end
 
   defp incoming_message(%{"event" => "ping"}, state) do
@@ -65,12 +65,12 @@ defmodule SignalTower.Session do
   end
 
   # invoked when a room exits
-  def handle_exit_message(pid, room, status, ltt) do
+  def handle_exit_message(pid, status, state = %{room: room, turn_timeout: turn_timeout}) do
     if room && pid == room.pid && status != :normal do
       # current room died => automatic rejoin
-      Room.join_and_monitor(room.id, room.own_status, ltt)
+      Room.join_and_monitor(room.id, room.own_status, turn_timeout)
     else
-      {nil, ltt}
+      state
     end
   end
 

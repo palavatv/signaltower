@@ -19,15 +19,14 @@ defmodule SignalTower.Room do
     end
   end
 
-  def join_and_monitor(room_id, status, last_turn_timestamp) do
+  def join_and_monitor(room_id, status, turn_timeout) do
     room_pid = create(room_id)
     Process.monitor(room_pid)
 
-    {own_id, new_turn_timestamp} =
-      GenServer.call(room_pid, {:join, self(), status, last_turn_timestamp})
+    {own_id, new_turn_timeout} = GenServer.call(room_pid, {:join, self(), status, turn_timeout})
 
     membership = %Membership{id: room_id, pid: room_pid, own_id: own_id, own_status: status}
-    {membership, new_turn_timestamp}
+    %{room: membership, turn_timeout: new_turn_timeout}
   end
 
   ## Callbacks ##
@@ -39,16 +38,16 @@ defmodule SignalTower.Room do
   end
 
   @impl GenServer
-  def handle_call({:join, pid, status, last_turn_timestamp}, _, members) do
+  def handle_call({:join, pid, status, turn_timeout}, _, members) do
     GenServer.cast(Stats, {:peer_joined, self(), map_size(members) + 1})
 
     Process.monitor(pid)
     peer_id = UUID.uuid1()
-    new_turn_timestamp = send_joined_room(pid, peer_id, members, last_turn_timestamp)
+    new_turn_timeout = send_joined_room(pid, peer_id, members, turn_timeout)
     send_new_peer(members, peer_id, status)
 
     new_member = %Member{peer_id: peer_id, pid: pid, status: status}
-    {:reply, {peer_id, new_turn_timestamp}, Map.put(members, peer_id, new_member)}
+    {:reply, {peer_id, new_turn_timeout}, Map.put(members, peer_id, new_member)}
   end
 
   @impl GenServer
@@ -132,13 +131,13 @@ defmodule SignalTower.Room do
     end)
   end
 
-  defp send_joined_room(pid, own_id, members, last_turn_timestamp) do
+  defp send_joined_room(pid, own_id, members, turn_timeout) do
     now = System.os_time(:second)
 
-    {turn_response, next_turn_timestamp} =
-      if System.get_env("SIGNALTOWER_TURN_SECRET") && last_turn_timestamp < now do
-        next_timestamp = now + 3 * 60 * 60
-        user = to_string(next_timestamp) <> ":" <> own_id
+    {turn_response, next_turn_timeout} =
+      if System.get_env("SIGNALTOWER_TURN_SECRET") && turn_timeout < now do
+        next_timeout = now + 3 * 60 * 60
+        user = to_string(next_timeout) <> ":" <> own_id
         secret = System.get_env("SIGNALTOWER_TURN_SECRET")
 
         response = %{
@@ -147,9 +146,9 @@ defmodule SignalTower.Room do
             :crypto.mac(:hmac, :sha, to_charlist(secret), to_charlist(user)) |> Base.encode64()
         }
 
-        {response, next_timestamp}
+        {response, next_timeout}
       else
-        {%{}, last_turn_timestamp}
+        {%{}, turn_timeout}
       end
 
     joined_response =
@@ -160,7 +159,7 @@ defmodule SignalTower.Room do
       })
 
     send(pid, {:to_user, joined_response})
-    next_turn_timestamp
+    next_turn_timeout
   end
 
   defp send_new_peer(members, peer_id, status) do
