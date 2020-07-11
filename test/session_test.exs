@@ -4,7 +4,7 @@ defmodule SessionTest do
 
   alias SignalTower.Session
 
-  @initial_state %{room: nil, turn_timeout: 0}
+  @initial_state %{room: nil, turn_token_expiry: 0}
 
   test "join and leave with registered users" do
     host_pid = self()
@@ -79,7 +79,7 @@ defmodule SessionTest do
             "event" => "leave_room",
             "room_id" => "s-room13"
           },
-          %{room: room, turn_timeout: 0}
+          %{room: room, turn_token_expiry: 0}
         )
       end)
 
@@ -102,7 +102,7 @@ defmodule SessionTest do
                 "peer_id" => peer_id,
                 "data" => %{some: "data"}
               },
-              %{room: room, turn_timeout: 0}
+              %{room: room, turn_token_expiry: 0}
             )
         end
       end)
@@ -130,7 +130,7 @@ defmodule SessionTest do
             "event" => "update_status",
             "status" => %{some: "status"}
           },
-          %{room: room, turn_timeout: 0}
+          %{room: room, turn_token_expiry: 0}
         )
       end)
 
@@ -169,7 +169,7 @@ defmodule SessionTest do
             "peer_id" => "some_peer",
             "data" => %{some: "data"}
           },
-          %{room: room, turn_timeout: 0}
+          %{room: room, turn_token_expiry: 0}
         )
 
         assert_receive {:to_user, m = %{event: "error"}}

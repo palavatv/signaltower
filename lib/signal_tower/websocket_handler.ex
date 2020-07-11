@@ -9,8 +9,8 @@ defmodule SignalTower.WebsocketHandler do
     initial_state = %{
       # room membership
       room: nil,
-      # initialize turn timeout with 0, it will be properly initialized on first room join
-      turn_timeout: 0
+      # initialize turn token expiry with 0, it will be properly initialized on first room join
+      turn_token_expiry: 0
     }
 
     {:cowboy_websocket, req, initial_state, %{idle_timeout: :timer.seconds(30)}}

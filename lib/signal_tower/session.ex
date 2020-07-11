@@ -23,7 +23,7 @@ defmodule SignalTower.Session do
   end
 
   defp incoming_message(msg = %{"event" => "join_room"}, state) do
-    Room.join_and_monitor(msg["room_id"], msg["status"], state.turn_timeout)
+    Room.join_and_monitor(msg["room_id"], msg["status"], state.turn_token_expiry)
   end
 
   defp incoming_message(msg = %{"event" => "leave_room"}, state = %{room: room}) do
@@ -65,10 +65,14 @@ defmodule SignalTower.Session do
   end
 
   # invoked when a room exits
-  def handle_exit_message(pid, status, state = %{room: room, turn_timeout: turn_timeout}) do
+  def handle_exit_message(
+        pid,
+        status,
+        state = %{room: room, turn_token_expiry: turn_token_expiry}
+      ) do
     if room && pid == room.pid && status != :normal do
       # current room died => automatic rejoin
-      Room.join_and_monitor(room.id, room.own_status, turn_timeout)
+      Room.join_and_monitor(room.id, room.own_status, turn_token_expiry)
     else
       state
     end
