@@ -71,6 +71,48 @@ defmodule SessionTest do
     wait_for_breaks(2)
   end
 
+  test "join and check turn expiry" do
+    System.put_env("SIGNALTOWER_TURN_SECRET", "verysecretpassphrase1234")
+
+    # no token produced yet
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      @initial_state
+    )
+
+    receive_and_check_turn_credentials(0)
+
+    # previous token is depleted
+    previous_expiry = System.os_time(:second) - 2000
+
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      %{room: nil, turn_token_expiry: previous_expiry}
+    )
+
+    receive_and_check_turn_credentials(previous_expiry)
+
+    # previous token is still valid
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      %{room: nil, turn_token_expiry: previous_expiry}
+    )
+
+    receive_and_check_turn_credentials(previous_expiry)
+  end
+
   test "leave explicitly" do
     _client1 =
       create_client("s-room13", fn room, _ ->

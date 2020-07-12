@@ -43,44 +43,25 @@ defmodule RoomTest do
     System.put_env("SIGNALTOWER_TURN_SECRET", "verysecretpassphrase1234")
     room_pid = create_room("r-room3")
 
-    go = fn timestamp_before ->
-      spawn_user_no_join(fn ->
-        GenServer.call(room_pid, {:join, self(), %{user: "1"}, 0})
+    # no token produced yet
+    spawn_user_no_join(fn ->
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, 0})
+      receive_and_check_turn_credentials(0)
+    end)
 
-        assert_receive(
-          {:to_user,
-           %{
-             event: "joined_room",
-             own_id: own_id,
-             turn_user: user,
-             turn_password: pw
-           }},
-          1000
-        )
+    # previous token is depleted
+    spawn_user_no_join(fn ->
+      previous_expiry = System.os_time(:second) - 2000
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, previous_expiry})
+      receive_and_check_turn_credentials(previous_expiry)
+    end)
 
-        [timestamp_str, id] = String.split(user, ":")
-        {timestamp, ""} = Integer.parse(timestamp_str)
-        assert own_id == id
-        assert System.os_time(:second) < timestamp
-        assert timestamp < System.os_time(:second) + 3 * 60 * 60 + 10
-        assert timestamp_before <= timestamp
-
-        assert pw ==
-                 :crypto.mac(
-                   :hmac,
-                   :sha,
-                   to_charlist("verysecretpassphrase1234"),
-                   to_charlist(user)
-                 )
-                 |> Base.encode64()
-      end)
-    end
-
-    go.(0)
-    # is depleted
-    go.(System.os_time(:second) - 200)
-    # is still valid
-    go.(System.os_time(:second) + 200)
+    # previous token is still valid
+    spawn_user_no_join(fn ->
+      previous_expiry = System.os_time(:second) + 2000
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, previous_expiry})
+      receive_and_check_turn_credentials(previous_expiry)
+    end)
 
     wait_for_breaks(2)
   end
