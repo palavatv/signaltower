@@ -23,7 +23,7 @@ defmodule RoomTest do
 
     _user2 =
       spawn_user_no_join(fn ->
-        GenServer.call(room_pid, {:join, self(), %{user: "1"}})
+        GenServer.call(room_pid, {:join, self(), %{user: "1"}, 0})
 
         assert_receive {:to_user,
                         %{
@@ -39,8 +39,35 @@ defmodule RoomTest do
     wait_for_breaks(2)
   end
 
-  test "send to peer" do
+  test "join room with turn" do
+    System.put_env("SIGNALTOWER_TURN_SECRET", "verysecretpassphrase1234")
     room_pid = create_room("r-room3")
+
+    # no token produced yet
+    spawn_user_no_join(fn ->
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, 0})
+      receive_and_check_turn_credentials(0)
+    end)
+
+    # previous token is depleted
+    spawn_user_no_join(fn ->
+      previous_expiry = System.os_time(:second) - 2000
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, previous_expiry})
+      receive_and_check_turn_credentials(previous_expiry)
+    end)
+
+    # previous token is still valid
+    spawn_user_no_join(fn ->
+      previous_expiry = System.os_time(:second) + 2000
+      GenServer.call(room_pid, {:join, self(), %{user: "1"}, previous_expiry})
+      receive_and_check_turn_credentials(previous_expiry)
+    end)
+
+    wait_for_breaks(2)
+  end
+
+  test "send to peer" do
+    room_pid = create_room("r-room4")
 
     user1 =
       spawn_user(room_pid, fn own_id ->
@@ -67,7 +94,7 @@ defmodule RoomTest do
   end
 
   test "update status" do
-    room_pid = create_room("r-room4")
+    room_pid = create_room("r-room5")
     join_room(self(), room_pid)
 
     spawn_user(room_pid, fn own_id ->
@@ -87,7 +114,7 @@ defmodule RoomTest do
   end
 
   test "leave room" do
-    room_pid = create_room("r-room5")
+    room_pid = create_room("r-room6")
     join_room(self(), room_pid)
 
     spawn_user(room_pid, fn own_id ->
@@ -108,7 +135,7 @@ defmodule RoomTest do
 
   # session process dies
   test "user leaves room when his session dies" do
-    room_pid = create_room("r-room6")
+    room_pid = create_room("r-room7")
     join_room(self(), room_pid)
 
     spawn_link(fn ->
@@ -128,7 +155,7 @@ defmodule RoomTest do
   end
 
   test "room exits when last active user is gone" do
-    room_pid = create_room("r-room7")
+    room_pid = create_room("r-room8")
     Process.monitor(room_pid)
     own_id = join_room(self(), room_pid)
     GenServer.call(room_pid, {:leave, own_id})
@@ -140,7 +167,7 @@ defmodule RoomTest do
   end
 
   defp join_room(pid, room_pid) do
-    GenServer.call(room_pid, {:join, pid, %{standard: "status"}})
+    GenServer.call(room_pid, {:join, pid, %{standard: "status"}, 0})
     assert_receive {:to_user, %{event: "joined_room", own_id: own_id}}, 1000
     own_id
   end

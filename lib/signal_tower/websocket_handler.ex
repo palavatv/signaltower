@@ -6,25 +6,32 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def init(req, _state) do
-    {:cowboy_websocket, req, nil, %{idle_timeout: :timer.seconds(30)}}
+    initial_state = %{
+      # room membership
+      room: nil,
+      # initialize turn token expiry with 0, it will be properly initialized on first room join
+      turn_token_expiry: 0
+    }
+
+    {:cowboy_websocket, req, initial_state, %{idle_timeout: :timer.seconds(30)}}
   end
 
   @impl :cowboy_websocket
-  def websocket_init(state) do
+  def websocket_init(initial_state) do
     Session.init()
     :timer.send_interval(:timer.seconds(5), :send_ping)
-    {:ok, state}
+    {:ok, initial_state}
   end
 
   @impl :cowboy_websocket
-  def websocket_handle({:text, msg}, room) do
+  def websocket_handle({:text, msg}, state) do
     case Poison.decode(msg) do
       {:ok, parsed_msg} ->
-        {:ok, Session.handle_message(parsed_msg, room)}
+        {:ok, Session.handle_message(parsed_msg, state)}
 
       _ ->
         answer = Poison.encode!(%{event: "error", description: "invalid json", received_msg: msg})
-        {:reply, {:text, answer}, room}
+        {:reply, {:text, answer}, state}
     end
   end
 
@@ -53,13 +60,13 @@ defmodule SignalTower.WebsocketHandler do
   end
 
   @impl :cowboy_websocket
-  def websocket_info({:DOWN, _, _, pid, status}, room) do
-    {:ok, Session.handle_exit_message(pid, room, status)}
+  def websocket_info({:DOWN, _, _, pid, status}, state) do
+    {:ok, Session.handle_exit_message(pid, status, state)}
   end
 
   @impl :cowboy_websocket
-  def websocket_info(:send_ping, status) do
-    {:reply, {:ping, "server ping"}, status}
+  def websocket_info(:send_ping, state) do
+    {:reply, {:ping, "server ping"}, state}
   end
 
   @impl :cowboy_websocket

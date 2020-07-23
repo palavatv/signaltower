@@ -4,6 +4,8 @@ defmodule SessionTest do
 
   alias SignalTower.Session
 
+  @initial_state %{room: nil, turn_token_expiry: 0}
+
   test "join and leave with registered users" do
     host_pid = self()
 
@@ -15,7 +17,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "0"}
           },
-          nil
+          @initial_state
         )
 
         assert_receive {:to_user,
@@ -54,7 +56,7 @@ defmodule SessionTest do
             "room_id" => "s-room1",
             "status" => %{user: "1"}
           },
-          nil
+          @initial_state
         )
 
         assert_receive {:to_user,
@@ -69,6 +71,48 @@ defmodule SessionTest do
     wait_for_breaks(2)
   end
 
+  test "join and check turn expiry" do
+    System.put_env("SIGNALTOWER_TURN_SECRET", "verysecretpassphrase1234")
+
+    # no token produced yet
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      @initial_state
+    )
+
+    receive_and_check_turn_credentials(0)
+
+    # previous token is depleted
+    previous_expiry = System.os_time(:second) - 2000
+
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      %{room: nil, turn_token_expiry: previous_expiry}
+    )
+
+    receive_and_check_turn_credentials(previous_expiry)
+
+    # previous token is still valid
+    Session.handle_message(
+      %{
+        "event" => "join_room",
+        "room_id" => "s-room1",
+        "status" => %{user: "0"}
+      },
+      %{room: nil, turn_token_expiry: previous_expiry}
+    )
+
+    receive_and_check_turn_credentials(previous_expiry)
+  end
+
   test "leave explicitly" do
     _client1 =
       create_client("s-room13", fn room, _ ->
@@ -77,7 +121,7 @@ defmodule SessionTest do
             "event" => "leave_room",
             "room_id" => "s-room13"
           },
-          room
+          %{room: room, turn_token_expiry: 0}
         )
       end)
 
@@ -100,7 +144,7 @@ defmodule SessionTest do
                 "peer_id" => peer_id,
                 "data" => %{some: "data"}
               },
-              room
+              %{room: room, turn_token_expiry: 0}
             )
         end
       end)
@@ -128,7 +172,7 @@ defmodule SessionTest do
             "event" => "update_status",
             "status" => %{some: "status"}
           },
-          room
+          %{room: room, turn_token_expiry: 0}
         )
       end)
 
@@ -149,13 +193,13 @@ defmodule SessionTest do
   test "not possible to use certain events when not in a room" do
     _client1 =
       create_client(fn _, _ ->
-        room =
+        %{room: room} =
           Session.handle_message(
             %{
               "event" => "update_status",
               "status" => %{new: "status"}
             },
-            nil
+            @initial_state
           )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -167,7 +211,7 @@ defmodule SessionTest do
             "peer_id" => "some_peer",
             "data" => %{some: "data"}
           },
-          room
+          %{room: room, turn_token_expiry: 0}
         )
 
         assert_receive {:to_user, m = %{event: "error"}}
@@ -182,7 +226,7 @@ defmodule SessionTest do
       %{
         "event" => "ping"
       },
-      nil
+      @initial_state()
     )
 
     assert_receive {:to_user, %{event: "pong"}}
@@ -193,7 +237,7 @@ defmodule SessionTest do
       %{
         "event" => "unknown"
       },
-      nil
+      @initial_state
     )
 
     assert_receive {:to_user, %{event: "error"}}
@@ -224,14 +268,14 @@ defmodule SessionTest do
   end
 
   defp join_room(room_id, host) do
-    room =
+    %{room: room} =
       Session.handle_message(
         %{
           "event" => "join_room",
           "room_id" => room_id,
           "status" => %{local: "status"}
         },
-        nil
+        @initial_state
       )
 
     if host, do: send(host, :start)
