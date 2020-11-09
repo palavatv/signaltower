@@ -1,3 +1,19 @@
+## 2.0.0
+
+Add Turn support.
+Add prometheus interface.
+Use CI, formatting, etc.
+Use mix releases instead of distillery.
+Move to Cowboy 2.0 and fix user not leaving the room bug.
+Use uuids as peer ids.
+Use websocket pings and small timeout instead of huge timeout.
+Rename option PALAVA_RTC_ADDRESS to SIGNALTOWER_PORT.
+
+## 1.1.0
+
+Fix Websocket timeout bug.
+Move to Elixir 1.9.
+
 ## 1.0.1
 
 Fix issue that distillery could not stop a running signal tower service.

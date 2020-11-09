@@ -4,7 +4,7 @@ defmodule SignalTower.MixProject do
   def project do
     [
       app: :signal_tower,
-      version: "1.1.0",
+      version: "2.0.0",
       elixir: "~> 1.9",
       deps: deps(),
       releases: releases()
