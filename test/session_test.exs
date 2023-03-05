@@ -226,7 +226,7 @@ defmodule SessionTest do
       %{
         "event" => "ping"
       },
-      @initial_state()
+      @initial_state
     )
 
     assert_receive {:to_user, %{event: "pong"}}
