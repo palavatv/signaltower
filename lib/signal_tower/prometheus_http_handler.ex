@@ -6,6 +6,8 @@ defmodule SignalTower.PrometheusHTTPHandler do
     headers = :cowboy_req.headers(req)
     body = SignalTower.PrometheusStats.to_string()
 
+    IO.inspect(:cowboy_req.header("Authorization", req))
+
     reply = :cowboy_req.reply(200, headers, body, req)
     {:ok, reply, :no_state}
   end

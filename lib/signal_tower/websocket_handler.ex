@@ -55,7 +55,7 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def websocket_handle(msg, state) do
-    Logger.warn("Unknown handle message: #{inspect(msg)}")
+    Logger.warning("Unknown handle message: #{inspect(msg)}")
     {:ok, state}
   end
 
@@ -81,7 +81,7 @@ defmodule SignalTower.WebsocketHandler do
 
   @impl :cowboy_websocket
   def websocket_info(msg, state) do
-    Logger.warn("Unknown info message: #{inspect(msg)}")
+    Logger.warning("Unknown info message: #{inspect(msg)}")
     {:ok, state}
   end
 
@@ -103,10 +103,10 @@ defmodule SignalTower.WebsocketHandler do
   def terminate(reason, req, _room) do
     case reason do
       {:error, error} ->
-        Logger.warn("websocket error: #{error}, request: #{inspect(req)}")
+        Logger.warning("websocket error: #{error}, request: #{inspect(req)}")
 
       {:crash, class, error} ->
-        Logger.warn(
+        Logger.warning(
           "websocket crash. class: #{class}, reason: #{error}, request: #{inspect(req)}"
         )
 
