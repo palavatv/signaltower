@@ -21,12 +21,12 @@ defmodule SignalTower.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cowboy, "~> 2.6.0"},
-      {:poison, "~> 4.0.1"},
-      {:prometheus_ex, "~> 3.0"},
+      {:cowboy, "~> 2.13"},
+      {:poison, "~> 6.0"},
+      {:prometheus_ex, "~> 4.0"},
       {:elixir_uuid, "~> 1.2"},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false},
-      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false},
+      {:mix_test_watch, "~> 1.3", only: :dev, runtime: false}
     ]
   end
 
